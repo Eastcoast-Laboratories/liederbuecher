@@ -9,6 +9,18 @@ CREATE TABLE songs (
     favorite INTEGER DEFAULT 0
 );
 
+selectAllSongs:
+SELECT * FROM songs;
+
+selectSongById:
+SELECT * FROM songs WHERE id = ?;
+
+insertSong:
+INSERT INTO songs(id, title, author, lyrics, genre, year, favorite) VALUES (?, ?, ?, ?, ?, ?, ?);
+
+updateSongFavorite:
+UPDATE songs SET favorite = ? WHERE id = ?;
+
 -- Books table
 CREATE TABLE books (
     id TEXT NOT NULL PRIMARY KEY,
@@ -16,6 +28,15 @@ CREATE TABLE books (
     year INTEGER,
     favorite INTEGER DEFAULT 0
 );
+
+selectAllBooks:
+SELECT * FROM books;
+
+selectBookById:
+SELECT * FROM books WHERE id = ?;
+
+insertBook:
+INSERT INTO books(id, title, year, favorite) VALUES (?, ?, ?, ?);
 
 -- Join table for book-song-page mapping
 CREATE TABLE book_song_page (
@@ -25,6 +46,12 @@ CREATE TABLE book_song_page (
     page_notes INTEGER,
     PRIMARY KEY (song_id, book_id)
 );
+
+insertBookSongPage:
+INSERT INTO book_song_page(song_id, book_id, page, page_notes) VALUES (?, ?, ?, ?);
+
+selectBySongId:
+SELECT * FROM book_song_page WHERE song_id = ?;
 
 -- Lyrics table (for fulltext search, can be extended later)
 CREATE TABLE lyrics (
