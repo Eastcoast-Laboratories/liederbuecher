@@ -1,12 +1,17 @@
 # Konzept für ein KI-driven Projekt: kultliederbuch
 
 # Allgemeine Beschreibung:
-Erstelle ein neues Android-Projekt mit Kotlin und Jetpack Compose, das mittels Kotlin Multiplatform (KMP) auch für iOS portiert wird. Das Projekt "kultliederbuch" speichert die Daten einer Liederbuchreihe ("Das Ding") lokal und ermöglicht die Suche nach Songtiteln, Autoren, Bücher und Songtextausschnitten. Für den Einsatz soll ein Shared Module (mit Kernlogik und Datenmodellen) eingerichtet werden. Die lokale Datenhaltung erfolgt z.B. über SQLDelight. Es wird der Editor Windsurf von Codeium benutzt mit dem KI-Modell claude 3.7 sonnet in cascade.
-Die Daten sind schon vorhanden in der tabelle `dev/data.csv`
-Struktur:
- Seite (Noten),	Seite,	Buch,	Künstler,	Titel,
+Erstelle ein neues Android-Projekt mit Kotlin und Jetpack Compose, das mittels Kotlin Multiplatform (KMP) auch für iOS portiert wird. Das Projekt "kultliederbuch" speichert die Daten einer Liederbuchreihe ("Das Ding") lokal und ermöglicht die Suche nach Songtiteln, Autoren, Bücher und Songtextausschnitten.
+- Für den Einsatz soll ein Shared Module (mit Kernlogik und Datenmodellen) eingerichtet werden.
+- Die lokale Datenhaltung erfolgt z.B. über SQLDelight.
+- Es wird der Editor Windsurf von Codeium benutzt mit dem KI-Modell claude 3.7 sonnet in cascade.
+- Die Daten sind schon vorhanden in der tabelle `dev/data.csv`
+    Struktur:
+    "Seite (Noten)",	"Seite",	"Buch",	"Künstler",	"Titel"
+    - Es gibt 12 Bücher: Buch1, Buch2, Buch3, Buch4, Buch5 und BuchW=Weihnachtslieder, jeweils einmal mit Noten, einmal ohne
+    - "Seite (Noten)" ist die Seitennummer im Buch<Buch>Noten und Seite die Seitennummer im Buch<Buch>
 
- Viele Songtexte sind in PDF Form im Ordner `dev/` vorliegend und könnten per OCR erkannt werden, die weiteren können später aus dem internet gescraped werden.
+ - Viele Songtexte sind in PDF Form im Ordner `dev/` vorliegend und könnten per OCR erkannt werden, die weiteren können später aus dem internet gescraped werden.
 
 - Die standardsprache in der app ist Deutsch
 - im code wird ausschliesslich englisch verwendet
