@@ -7,7 +7,7 @@ Erstelle ein neues Android-Projekt mit Kotlin und Jetpack Compose, das mittels K
 - Es wird der Editor Windsurf von Codeium benutzt mit dem KI-Modell claude 3.7 sonnet in cascade.
 - Die Daten sind schon vorhanden in der tabelle `dev/data.csv`
     Struktur:
-    "Seite (Noten)",	"Seite",	"Buch",	"Künstler",	"Titel"
+    "Seite (Noten)",    "Seite",    "Buch",    "Künstler",    "Titel"
     - Es gibt 12 Bücher: Buch1, Buch2, Buch3, Buch4, Buch5 und BuchW=Weihnachtslieder, jeweils einmal mit Noten, einmal ohne
     - "Seite (Noten)" ist die Seitennummer im Buch<Buch>Noten und Seite die Seitennummer im Buch<Buch>
 
@@ -22,16 +22,19 @@ Erstelle ein neues Android-Projekt mit Kotlin und Jetpack Compose, das mittels K
    - Verwende KMP für die gemeinsame Entwicklung von Android und iOS.
    - Teile den Shared Module (mit Kernlogik und Datenmodellen) für beide Plattformen.
    - Verwende SQLDelight für die Datenhaltung.
+ - **Test-Driven Development (TDD)**
+   - Schreibe für jede neue Funktionalität zuerst einen Test (Unit- oder Integrationstest), dann die Implementierung.
+   - Halte die Testabdeckung im Shared-Modul und in der App hoch.
 
 # Schnelle KI-gestützte Umsetzung: Aufgabenübersicht
 
 - [ ] Projektstruktur und Gradle-Skripte anlegen (`/buildSrc`, `/app-android`, `/shared`, settings.gradle.kts, build.gradle.kts)
-- [ ] Datenmodelle (`Song`, `Book`, JoinTable) im Shared-Modul (inkl. TODO-Kommentare für Erweiterungen)
-- [ ] SQLDelight-Schema mit allen Tabellen (`songs`, `books`, JoinTable, `user_data`, `lyrics`)
+- [ ] Datenmodelle (`Song`, `Book`, JoinTable, UserComment) im Shared-Modul (inkl. TODO-Kommentare für Erweiterungen)
+- [ ] SQLDelight-Schema mit allen Tabellen (`songs`, `books`, JoinTable, `user_data`, `lyrics`, `user_comments`)
 - [ ] Dummy-Repository und Suchfunktion (mit Beispiel-Songliste)
 - [ ] MainActivity mit Compose-UI und Dummy-Daten
 - [ ] Accessibility-Strings in `strings.xml` (_a11y Platzhalter)
-- [ ] Beispiel-Test für Suche im Shared-Modul
+- [ ] Beispiel-Test für Suche und User-Kommentare im Shared-Modul (TDD)
 
 # Ordner- und Modulstruktur:
 Erzeuge folgende Ordnerstruktur:
@@ -70,6 +73,12 @@ Erzeuge folgende Ordnerstruktur:
         - title: String (Titel des Buches)
         - year: Int? (Erscheinungsjahr)
         - favorite: Boolean (Favoriten-Status)
+      - `UserComment` (Join-Tabelle für Kommentare des Users zu Songs):
+        - id: String (Eindeutige ID)
+        - songId: String (Referenz auf Song)
+        - userId: String (Referenz auf User, falls Multi-User)
+        - comment: String (Kommentartext)
+        - timestamp: Long (Zeitstempel)
    - Eine vollständige Such-Funktionalität mit:
      - Volltextsuche über alle Felder
      - Filteroptionen (Genre, Favoriten, Zeitraum)
@@ -79,6 +88,7 @@ Erzeuge folgende Ordnerstruktur:
      - `books` (Buchdaten)
      - `lyrics` (Volltexte für effiziente Suche)
      - `user_data` (Nutzerspezifische Daten wie Favoriten, Notizen)
+     - `user_comments` (Kommentare des Users zu Songs)
 
 3. **Projekt-Setup:**
    - Multi-Module-Gradle-Build, sodass die Module korrekt zusammenarbeiten.
@@ -94,6 +104,7 @@ Erzeuge folgende Ordnerstruktur:
    - Favoriten speichern/verwalten
    - Eigene Notizen zu Songs hinzufügen
    - Persönliche Playlists erstellen
+   - Kommentare zu Songs speichern und anzeigen (UserComment)
 
 # Technische Spezifikationen:
 1. **Architektur**
@@ -113,9 +124,11 @@ Erzeuge folgende Ordnerstruktur:
    - Paging für große Datenmengen
 
 4. **Testing-Strategie**
+   - Test-Driven Development (TDD) als Prinzip: Schreibe zuerst Tests, dann Implementierung
    - Unit-Tests für die Geschäftslogik im Shared Module
    - Integration-Tests für Repository- und Datenbankzugriffe
    - UI-Tests für kritische User Journeys
+   - Beispiel-Test für User-Kommentare und Suchfunktion
 
 # AI-Driven Implementierungsansatz:
 Das gesamte Projekt wird in einem ganzheitlichen Ansatz implementiert, ohne traditionelle Entwicklungsphasen. Alle Komponenten werden parallel entwickelt:
@@ -142,4 +155,3 @@ Das gesamte Projekt wird in einem ganzheitlichen Ansatz implementiert, ohne trad
 - Kommentiere wichtige Stellen in Gradle-Skripten und Datenmodellen auf englisch
 - Halte die Benennung konsistent und sprechend für optimale KI-Unterstützung.
 - Verwende aussagekraftvolle Kommentare in englisch
-
