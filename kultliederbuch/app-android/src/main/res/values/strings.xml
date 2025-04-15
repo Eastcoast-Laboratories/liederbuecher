@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App name -->
+    <string name="app_name">Kultliederbuch</string>
+    <!-- Suchleiste -->
+    <string name="search_hint">Suche nach Titel, Autor oder Text...</string>
+    <!-- Songliste -->
+    <string name="song_list_title">Lieder</string>
+    <!-- Detailansicht -->
+    <string name="song_detail_title">Song-Details</string>
+    <!-- Akkorde -->
+    <string name="chords_label">Akkorde</string>
+    <!-- Teilen -->
+    <string name="share_song">Song teilen</string>
+    <!-- Favorit -->
+    <string name="favorite">Favorit</string>
+    <!-- Kommentar -->
+    <string name="comment">Kommentar</string>
+    <!-- Accessibility Strings -->
+    <string name="search_bar_a11y">Suchleiste für Songs</string>
+    <string name="song_list_a11y">Liste aller Songs</string>
+    <string name="favorite_button_a11y">Song als Favorit markieren</string>
+    <string name="add_comment_a11y">Kommentar hinzufügen</string>
+</resources>
