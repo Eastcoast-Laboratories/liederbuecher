@@ -7,6 +7,7 @@ plugins {
 kotlin {
     android()
     ios()
+    jvmToolchain(21)
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -44,5 +45,9 @@ android {
     defaultConfig {
         minSdk = 24
         targetSdk = 34
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 }
