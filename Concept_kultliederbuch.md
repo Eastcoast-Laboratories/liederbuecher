@@ -2,12 +2,31 @@
 
 # Allgemeine Beschreibung:
 Erstelle ein neues Android-Projekt mit Kotlin und Jetpack Compose, das mittels Kotlin Multiplatform (KMP) auch für iOS portiert wird. Das Projekt "kultliederbuch" speichert die Daten einer Liederbuchreihe ("Das Ding") lokal und ermöglicht die Suche nach Songtiteln, Autoren, Bücher und Songtextausschnitten. Für den Einsatz soll ein Shared Module (mit Kernlogik und Datenmodellen) eingerichtet werden. Die lokale Datenhaltung erfolgt z.B. über SQLDelight. Es wird der Editor Windsurf von Codeium benutzt mit dem KI-Modell claude 3.7 sonnet in cascade.
+Die Daten sind schon vorhanden in der tabelle `dev/data.csv`
+Struktur:
+ Seite (Noten),	Seite,	Buch,	Künstler,	Titel,
 
+ Viele Songtexte sind in PDF Form im Ordner `dev/` vorliegend und könnten per OCR erkannt werden, die weiteren können später aus dem internet gescraped werden.
+
+- Die standardsprache in der app ist Deutsch
+- im code wird ausschliesslich englisch verwendet
+- alle ausgegebenen texte werden in strings.xml definiert, wobei nur die default strings.xml erstellt wird, die vollständig in deutsch ist. englisch soll ev. später kommen
+ 
 # Allgemeine Implementierungsanweisungen:
  - **Kotlin Multiplatform (KMP)**
    - Verwende KMP für die gemeinsame Entwicklung von Android und iOS.
    - Teile den Shared Module (mit Kernlogik und Datenmodellen) für beide Plattformen.
    - Verwende SQLDelight für die Datenhaltung.
+
+# Schnelle KI-gestützte Umsetzung: Aufgabenübersicht
+
+- [ ] Projektstruktur und Gradle-Skripte anlegen (`/buildSrc`, `/app-android`, `/shared`, settings.gradle.kts, build.gradle.kts)
+- [ ] Datenmodelle (`Song`, `Book`, JoinTable) im Shared-Modul (inkl. TODO-Kommentare für Erweiterungen)
+- [ ] SQLDelight-Schema mit allen Tabellen (`songs`, `books`, JoinTable, `user_data`, `lyrics`)
+- [ ] Dummy-Repository und Suchfunktion (mit Beispiel-Songliste)
+- [ ] MainActivity mit Compose-UI und Dummy-Daten
+- [ ] Accessibility-Strings in `strings.xml` (_a11y Platzhalter)
+- [ ] Beispiel-Test für Suche im Shared-Modul
 
 # Ordner- und Modulstruktur:
 Erzeuge folgende Ordnerstruktur:
@@ -108,3 +127,14 @@ Das gesamte Projekt wird in einem ganzheitlichen Ansatz implementiert, ohne trad
 - Erstelle sinnvolle Kommentare als Platzhalter für weitere Implementierungen.
 - Datenschutz und lokale Datenhaltung ohne externe Server
 - Zugänglichkeit (Accessibility) durch semantische Beschreibungen
+
+---
+
+**Hinweise für die Umsetzung im Editor:**
+- Nutze die Aufgabenübersicht oben für atomic commits und schnelle Navigation.
+- Füge überall, wo nötig, `// TODO`-Kommentare für KI und Entwickler ein.
+- Lege in `strings.xml` Accessibility-Strings mit `_a11y`-Suffix an.
+- Kommentiere wichtige Stellen in Gradle-Skripten und Datenmodellen auf englisch
+- Halte die Benennung konsistent und sprechend für optimale KI-Unterstützung.
+- Verwende aussagekraftvolle Kommentare in englisch
+
