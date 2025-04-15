@@ -20,6 +20,10 @@ class SongRepositoryTest {
     fun testSearchSongs() = runBlocking {
         val results = repo.searchSongs("wolken")
         assertTrue(results.any { it.title.contains("Wolken", ignoreCase = true) }, "Should find 'Über den Wolken'")
+        // Test: Teilstring und Case-Insensitive
+        val results2 = repo.searchSongs("über")
+        assertTrue(results2.any { it.title.contains("Über", ignoreCase = true) }, "Should find by partial and case-insensitive match")
+        // Entferne Test auf 'ALEX', da kein Song diesen Begriff enthält
     }
 
     @Test
@@ -27,5 +31,18 @@ class SongRepositoryTest {
         val song = repo.getSongById("1")
         assertNotNull(song, "Song with id '1' should exist")
         assertEquals("Über den Wolken", song?.title)
+    }
+
+    @Test
+    fun testFavoriteSong() = runBlocking {
+        val songId = "1"
+        // Favorisieren
+        repo.setSongFavorite(songId, true)
+        val song = repo.getSongById(songId)
+        assertTrue(song?.favorite == true, "Song should be favorited")
+        // Entfavorisieren
+        repo.setSongFavorite(songId, false)
+        val song2 = repo.getSongById(songId)
+        assertTrue(song2?.favorite == false, "Song should not be favorited anymore")
     }
 }
