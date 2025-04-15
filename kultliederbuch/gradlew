@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+# Gradle wrapper script placeholder for kultliederbuch
+# TODO: Add the real Gradle wrapper files for full automation
+exec ./gradle "$@"
