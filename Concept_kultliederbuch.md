@@ -76,7 +76,7 @@ Erzeuge folgende Ordnerstruktur:
       - `UserComment` (Join-Tabelle für Kommentare des Users zu Songs):
         - id: String (Eindeutige ID)
         - songId: String (Referenz auf Song)
-        - userId: String (Referenz auf User, falls Multi-User)
+        - bookId: String (Referenz auf Buch)
         - comment: String (Kommentartext)
         - timestamp: Long (Zeitstempel)
    - Eine vollständige Such-Funktionalität mit:
@@ -104,7 +104,7 @@ Erzeuge folgende Ordnerstruktur:
    - Favoriten speichern/verwalten
    - Eigene Notizen zu Songs hinzufügen
    - Persönliche Playlists erstellen
-   - Kommentare zu Songs speichern und anzeigen (UserComment)
+   - Kommentare zu Songs und Bücher speichern und anzeigen (UserComment)
 
 # Technische Spezifikationen:
 1. **Architektur**
