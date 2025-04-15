@@ -1,0 +1,52 @@
+-- Songs table
+CREATE TABLE songs (
+    id TEXT NOT NULL PRIMARY KEY,
+    title TEXT NOT NULL,
+    author TEXT NOT NULL,
+    lyrics TEXT NOT NULL,
+    genre TEXT,
+    year INTEGER,
+    favorite INTEGER DEFAULT 0
+);
+
+-- Books table
+CREATE TABLE books (
+    id TEXT NOT NULL PRIMARY KEY,
+    title TEXT NOT NULL,
+    year INTEGER,
+    favorite INTEGER DEFAULT 0
+);
+
+-- Join table for book-song-page mapping
+CREATE TABLE book_song_page (
+    song_id TEXT NOT NULL REFERENCES songs(id),
+    book_id TEXT NOT NULL REFERENCES books(id),
+    page INTEGER,
+    page_notes INTEGER,
+    PRIMARY KEY (song_id, book_id)
+);
+
+-- Lyrics table (for fulltext search, can be extended later)
+CREATE TABLE lyrics (
+    song_id TEXT NOT NULL REFERENCES songs(id),
+    text TEXT NOT NULL,
+    PRIMARY KEY (song_id)
+);
+
+-- User data (favorites, notes, etc.)
+CREATE TABLE user_data (
+    id TEXT NOT NULL PRIMARY KEY,
+    song_id TEXT REFERENCES songs(id),
+    book_id TEXT REFERENCES books(id),
+    favorite INTEGER DEFAULT 0,
+    note TEXT
+);
+
+-- User comments (comments for songs or books)
+CREATE TABLE user_comments (
+    id TEXT NOT NULL PRIMARY KEY,
+    song_id TEXT REFERENCES songs(id),
+    book_id TEXT REFERENCES books(id),
+    comment TEXT NOT NULL,
+    timestamp INTEGER NOT NULL
+);
