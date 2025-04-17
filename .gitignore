@@ -2,7 +2,6 @@
 kultliederbuch/.gradle
 kultliederbuch/build/
 kultliederbuch/shared/build/
-kultliederbuch/.idea/
 kultliederbuch/shared/.idea/
 kultliederbuch/shared/build/generated/
 kultliederbuch/shared/build/intermediates/
@@ -10,3 +9,5 @@ kultliederbuch/shared/build/outputs/
 kultliederbuch/shared/build/tmp/
 kultliederbuch/shared/build/sqlc/
 dev/data.csv
+caches/
+.gradle/
