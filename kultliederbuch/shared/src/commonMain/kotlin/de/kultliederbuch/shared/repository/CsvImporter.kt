@@ -38,13 +38,33 @@ object CsvImporter {
         for (line in lines.drop(1)) {
             val cols = line.split(",").map { it.trim() }
             if (cols.size < header.size) continue
-            val bookTitle = cols[idxBuch]
-            val bookId = bookTitle.replace(" ", "_").lowercase()
-            if (!books.containsKey(bookId)) {
-                books[bookId] = Book(id = bookId, title = bookTitle, year = null, favorite = false)
+            val buchId = cols[idxBuch]
+            
+            // Erstelle zwei Bucheinträge: Mit und ohne Noten
+            val bookWithoutNotesId = "book_${buchId}"
+            val bookWithNotesId = "book_${buchId}_notes"
+            
+            // Nur hinzufügen, wenn das Buch noch nicht existiert
+            if (!books.containsKey(bookWithoutNotesId)) {
+                books[bookWithoutNotesId] = Book(
+                    id = bookWithoutNotesId,
+                    title = if (buchId == "W") "Weihnachtslieder" else "Buch $buchId", 
+                    year = null, 
+                    favorite = false
+                )
             }
+            
+            if (!books.containsKey(bookWithNotesId)) {
+                books[bookWithNotesId] = Book(
+                    id = bookWithNotesId,
+                    title = if (buchId == "W") "Weihnachtslieder mit Noten" else "Buch $buchId mit Noten", 
+                    year = null, 
+                    favorite = false
+                )
+            }
+            
             val songTitle = cols[idxTitel]
-            val songId = songTitle.replace(" ", "_").lowercase() + "_" + bookId
+            val songId = songTitle.replace(" ", "_").lowercase() + "_" + buchId
             val author = cols[idxKuenstler]
             songs.add(
                 Song(
@@ -57,17 +77,31 @@ object CsvImporter {
                     favorite = false
                 )
             )
-            // Mapping für BookSongPage
+            // Mapping für BookSongPage - für Buch ohne Noten
             val page = if (idxSeite in cols.indices) cols[idxSeite].toIntOrNull() else null
-            val pageNotes = if (idxSeiteNoten in cols.indices) cols[idxSeiteNoten].toIntOrNull() else null
-            bookSongPages.add(
-                BookSongPage(
-                    songId = songId,
-                    bookId = bookId,
-                    page = page,
-                    pageNotes = pageNotes
+            if (page != null) {
+                bookSongPages.add(
+                    BookSongPage(
+                        songId = songId,
+                        bookId = bookWithoutNotesId,
+                        page = page,
+                        pageNotes = null
+                    )
                 )
-            )
+            }
+            
+            // Mapping für BookSongPage - für Buch mit Noten
+            val pageNotes = if (idxSeiteNoten in cols.indices) cols[idxSeiteNoten].toIntOrNull() else null
+            if (pageNotes != null) {
+                bookSongPages.add(
+                    BookSongPage(
+                        songId = songId,
+                        bookId = bookWithNotesId,
+                        page = null,
+                        pageNotes = pageNotes
+                    )
+                )
+            }
         }
         return CsvImportResult(songs = songs, books = books.values.toList(), bookSongPages = bookSongPages)
     }

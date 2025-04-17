@@ -74,6 +74,7 @@ class CsvSongRepository(csvData: String) : SongRepository {
     private val importResult = CsvImporter.import(csvData)
     private val songs = importResult.songs.toMutableList()
     private val books = importResult.books
+    private val bookSongPages = importResult.bookSongPages
 
     override suspend fun getAllSongs(): List<Song> = songs
     override suspend fun searchSongs(query: String): List<Song> =
@@ -82,7 +83,8 @@ class CsvSongRepository(csvData: String) : SongRepository {
     override suspend fun getSongById(id: String): Song? = songs.find { it.id == id }
     override suspend fun getAllBooks(): List<Book> = books
     override suspend fun getBookById(id: String): Book? = books.find { it.id == id }
-    override suspend fun getPagesForSong(songId: String): List<BookSongPage> = listOf()
+    override suspend fun getPagesForSong(songId: String): List<BookSongPage> = 
+        bookSongPages.filter { it.songId == songId }
     override suspend fun getCommentsForSong(songId: String): List<UserComment> = listOf()
     override suspend fun getCommentsForBook(bookId: String): List<UserComment> = listOf()
     override suspend fun setSongFavorite(songId: String, favorite: Boolean) {
