@@ -74,9 +74,24 @@ fun KultliederbuchApp() {
     var search by remember { mutableStateOf("") }
     val repo = remember { CsvSongRepository(csvData) }
     var songs by remember { mutableStateOf(listOf<de.kultliederbuch.shared.model.Song>()) }
+    
+    // Map für Song-Seitenzuordnungen (SongID -> List<BookSongPage>)
+    var songPages by remember { mutableStateOf(mapOf<String, List<de.kultliederbuch.shared.model.BookSongPage>>()) }
+    // Map für Buchdetails (BuchID -> Book)
+    var bookMap by remember { mutableStateOf(mapOf<String, de.kultliederbuch.shared.model.Book>()) }
 
     LaunchedEffect(search) {
         songs = runBlocking { repo.searchSongs(search) }
+        // Lade Buchinformationen
+        bookMap = runBlocking { repo.getAllBooks().associateBy { it.id } }
+        
+        // Lade Seitenzuordnungen für alle Songs in den Suchergebnissen
+        songPages = runBlocking {
+            songs.associate { song ->
+                song.id to repo.getPagesForSong(song.id)
+            }
+        }
+        
         // Log bei Suchen
         if (search.isNotEmpty()) {
             Timber.tag("SEARCH").d("Suche nach '$search' ergab ${songs.size} Ergebnisse")
@@ -105,6 +120,30 @@ fun KultliederbuchApp() {
                         Column(modifier = Modifier.padding(12.dp)) {
                             Text(text = song.title, style = MaterialTheme.typography.titleMedium)
                             Text(text = song.author, style = MaterialTheme.typography.bodyMedium)
+                            
+                            // Zeige Buch und Seitennummern an
+                            val pages = songPages[song.id] ?: emptyList()
+                            if (pages.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "Vorhanden in:",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                )
+                                pages.forEach { bookPage ->
+                                    val book = bookMap[bookPage.bookId]
+                                    val pageInfo = when {
+                                        bookPage.page != null -> "Seite ${bookPage.page}"
+                                        bookPage.pageNotes != null -> "Seite ${bookPage.pageNotes}"
+                                        else -> ""
+                                    }
+                                    
+                                    Text(
+                                        text = "${book?.title ?: "Unbekanntes Buch"}: $pageInfo",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
                         }
                     }
                 }
