@@ -14,10 +14,48 @@ import androidx.compose.ui.unit.dp
 import de.kultliederbuch.shared.repository.CsvSongRepository
 import de.kultliederbuch.shared.util.ResourceHelper
 import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // CSV-Daten laden und ersten 10 Titel loggen
+        val csvData = ResourceHelper.readResourceAsString("data.csv")
+        Timber.tag("CSV_DATA").d("CSV-Daten geladen (null=nicht gefunden): ${csvData?.take(100)}...")
+        
+        // Zusätzliche Diagnoseinformationen über den Ladeprozess
+        if (csvData == null) {
+            // Versuche, alle Dateien im Assets-Verzeichnis aufzulisten
+            try {
+                val assetList = assets.list("")
+                Timber.tag("CSV_FILES").d("Verfügbare Assets: ${assetList?.joinToString(", ")}")
+            } catch (e: Exception) {
+                Timber.tag("CSV_FILES").e("Fehler beim Auflisten der Assets: ${e.message}")
+            }
+            
+            Timber.tag("CSV_ERROR").e("CSV-Datei konnte nicht geladen werden. Geprüfte Pfade: assets/data.csv, raw/data, klassische Ressource")
+        }
+        
+        val repo = CsvSongRepository(csvData ?: "")
+        
+        // Diagnoseinformationen aus dem Importer loggen
+        Timber.tag("CSV_DIAGNOSIS").d("CSV-Import Diagnoseinformationen:\n${repo.diagnosticInfo}")
+        
+        // Hier die ersten 10 Titel loggen
+        runBlocking {
+            try {
+                val allSongs = repo.getAllSongs()
+                val firstTen = allSongs.take(10)
+                Timber.tag("CSV_IMPORT").d("Importierte ${allSongs.size} Songs insgesamt")
+                firstTen.forEachIndexed { index, song ->
+                    Timber.tag("CSV_SONG").d("Song $index: ${song.title} - ${song.author}")
+                }
+            } catch (e: Exception) {
+                Timber.tag("CSV_ERROR").e(e, "Fehler beim Laden der Songs")
+            }
+        }
+        
         setContent {
             KultliederbuchApp()
         }
@@ -39,6 +77,10 @@ fun KultliederbuchApp() {
 
     LaunchedEffect(search) {
         songs = runBlocking { repo.searchSongs(search) }
+        // Log bei Suchen
+        if (search.isNotEmpty()) {
+            Timber.tag("SEARCH").d("Suche nach '$search' ergab ${songs.size} Ergebnisse")
+        }
     }
 
     MaterialTheme {

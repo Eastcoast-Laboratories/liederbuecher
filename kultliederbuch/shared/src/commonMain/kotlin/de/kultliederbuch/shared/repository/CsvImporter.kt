@@ -10,7 +10,8 @@ import de.kultliederbuch.shared.model.BookSongPage
 data class CsvImportResult(
     val songs: List<Song>,
     val books: List<Book>,
-    val bookSongPages: List<BookSongPage>
+    val bookSongPages: List<BookSongPage>,
+    val diagnosticInfo: String // Neue Eigenschaft für Diagnose-Informationen
 )
 
 /**
@@ -19,25 +20,51 @@ data class CsvImportResult(
  */
 object CsvImporter {
     fun import(csv: String): CsvImportResult {
+        // Diagnose-Zeichenkette für detaillierte Fehleranalyse
+        val diagnosticBuilder = StringBuilder()
+        diagnosticBuilder.append("CSV-Länge: ${csv.length} Zeichen\n")
+        
+        // Kurze Vorschau der CSV-Daten
+        val preview = if (csv.length > 100) csv.substring(0, 100) + "..." else csv
+        diagnosticBuilder.append("CSV-Vorschau: $preview\n")
+        
         // Normalize all line endings to \n
         val normalized = csv.replace("\r\n", "\n").replace("\r", "\n")
         val lines = normalized.lines().map { it.trim() }.filter { it.isNotBlank() }
-        if (lines.size <= 1) return CsvImportResult(emptyList(), emptyList(), emptyList())
+        diagnosticBuilder.append("Anzahl Zeilen nach Normalisierung: ${lines.size}\n")
+        
+        if (lines.size <= 1) {
+            diagnosticBuilder.append("FEHLER: Keine oder zu wenige Zeilen in der CSV\n")
+            return CsvImportResult(emptyList(), emptyList(), emptyList(), diagnosticBuilder.toString())
+        }
+        
         val header = lines[0].split(",").map { it.trim() }
+        diagnosticBuilder.append("Header: ${header.joinToString(", ")}\n")
+        
         val idxSeiteNoten = header.indexOfFirst { it.contains("Seite (Noten)") }
         val idxSeite = header.indexOfFirst { it == "Seite" }
         val idxBuch = header.indexOfFirst { it == "Buch" }
         val idxKuenstler = header.indexOfFirst { it == "Künstler" }
         val idxTitel = header.indexOfFirst { it == "Titel" }
+        
+        diagnosticBuilder.append("Spaltenindizes: Seite (Noten)=$idxSeiteNoten, Seite=$idxSeite, Buch=$idxBuch, Künstler=$idxKuenstler, Titel=$idxTitel\n")
+        
         if (listOf(idxBuch, idxKuenstler, idxTitel).any { it == -1 }) {
-            return CsvImportResult(emptyList(), emptyList(), emptyList())
+            diagnosticBuilder.append("FEHLER: Erforderliche Spalten fehlen in der CSV\n")
+            return CsvImportResult(emptyList(), emptyList(), emptyList(), diagnosticBuilder.toString())
         }
+        
         val books = mutableMapOf<String, Book>()
         val songs = mutableListOf<Song>()
         val bookSongPages = mutableListOf<BookSongPage>()
+        
         for (line in lines.drop(1)) {
             val cols = line.split(",").map { it.trim() }
-            if (cols.size < header.size) continue
+            if (cols.size < header.size) {
+                diagnosticBuilder.append("Zeile übersprungen (zu wenige Spalten): $line\n")
+                continue
+            }
+            
             val buchId = cols[idxBuch]
             
             // Erstelle zwei Bucheinträge: Mit und ohne Noten
@@ -103,6 +130,17 @@ object CsvImporter {
                 )
             }
         }
-        return CsvImportResult(songs = songs, books = books.values.toList(), bookSongPages = bookSongPages)
+        
+        diagnosticBuilder.append("Ergebnis: ${songs.size} Songs, ${books.size} Bücher, ${bookSongPages.size} Verknüpfungen\n")
+        if (songs.isNotEmpty()) {
+            diagnosticBuilder.append("Beispiel-Song: ${songs[0].title} von ${songs[0].author}\n")
+        }
+        
+        return CsvImportResult(
+            songs = songs, 
+            books = books.values.toList(), 
+            bookSongPages = bookSongPages,
+            diagnosticInfo = diagnosticBuilder.toString()
+        )
     }
 }

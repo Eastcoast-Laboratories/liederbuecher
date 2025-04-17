@@ -26,6 +26,8 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 implementation("com.squareup.sqldelight:android-driver:1.5.5")
+                // Timber für Logging
+                implementation("com.jakewharton.timber:timber:5.0.1")
             }
         }
         val iosX64Main by getting
