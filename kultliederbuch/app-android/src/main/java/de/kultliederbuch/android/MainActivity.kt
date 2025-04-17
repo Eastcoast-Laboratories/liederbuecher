@@ -11,7 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
-import de.kultliederbuch.shared.repository.DummySongRepository
+import de.kultliederbuch.shared.repository.CsvSongRepository
+import de.kultliederbuch.shared.util.ResourceHelper
 import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
@@ -26,9 +27,14 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KultliederbuchApp() {
+    // Lade CSV-Daten aus den Ressourcen
+    val csvData = remember {
+        ResourceHelper.readResourceAsString("data.csv") ?: ""
+    }
+
     // remember verwenden, um State über Recompositions hinweg zu erhalten
     var search by remember { mutableStateOf("") }
-    val repo = remember { DummySongRepository() }
+    val repo = remember { CsvSongRepository(csvData) }
     var songs by remember { mutableStateOf(listOf<de.kultliederbuch.shared.model.Song>()) }
 
     LaunchedEffect(search) {
