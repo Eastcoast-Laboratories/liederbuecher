@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import de.kultliederbuch.shared.repository.DummySongRepository
 import kotlinx.coroutines.runBlocking
@@ -24,6 +26,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KultliederbuchApp() {
+    // remember verwenden, um State über Recompositions hinweg zu erhalten
     var search by remember { mutableStateOf("") }
     val repo = remember { DummySongRepository() }
     var songs by remember { mutableStateOf(listOf<de.kultliederbuch.shared.model.Song>()) }
