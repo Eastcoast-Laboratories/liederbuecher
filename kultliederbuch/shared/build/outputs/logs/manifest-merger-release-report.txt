@@ -1,16 +1,16 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest7160824218881081430.xml:2:13-83
-INJECTED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest7160824218881081430.xml:2:13-83
+ADDED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest876057211476204472.xml:2:13-83
+INJECTED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest876057211476204472.xml:2:13-83
 	package
-		INJECTED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest7160824218881081430.xml
+		INJECTED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest876057211476204472.xml
 	xmlns:android
-		ADDED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest7160824218881081430.xml:2:23-81
+		ADDED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest876057211476204472.xml:2:23-81
 uses-sdk
-INJECTED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest7160824218881081430.xml reason: use-sdk injection requested
-INJECTED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest7160824218881081430.xml
-INJECTED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest7160824218881081430.xml
+INJECTED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest876057211476204472.xml reason: use-sdk injection requested
+INJECTED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest876057211476204472.xml
+INJECTED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest876057211476204472.xml
 	android:targetSdkVersion
-		INJECTED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest7160824218881081430.xml
+		INJECTED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest876057211476204472.xml
 	android:minSdkVersion
-		INJECTED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest7160824218881081430.xml
+		INJECTED from /var/www/kultliederbuch.z11.de/kultliederbuch/shared/build/intermediates/tmp/ProcessLibraryManifest/release/tempAndroidManifest876057211476204472.xml
