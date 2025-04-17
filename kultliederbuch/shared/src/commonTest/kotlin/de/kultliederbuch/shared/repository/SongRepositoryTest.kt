@@ -45,4 +45,11 @@ class SongRepositoryTest {
         val song2 = repo.getSongById(songId)
         assertTrue(song2?.favorite == false, "Song should not be favorited anymore")
     }
+
+    @Test
+    fun testCommentsForSong() = runBlocking {
+        val comments = repo.getCommentsForSong("1")
+        // Dummy liefert aktuell immer eine leere Liste
+        assertTrue(comments.isEmpty(), "No comments should be present for dummy")
+    }
 }
