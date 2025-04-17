@@ -28,17 +28,25 @@ Erstelle ein neues Android-Projekt mit Kotlin und Jetpack Compose, das mittels K
 
 # Schnelle KI-gestützte Umsetzung: Aufgabenübersicht
 
-- [x] Projektstruktur und Gradle-Skripte anlegen (`/buildSrc`, `/app-android`, `/shared`, settings.gradle.kts, build.gradle.kts)
-- [x] Datenmodelle (`Song`, `Book`, JoinTable, UserComment) im Shared-Modul (inkl. TODO-Kommentare für Erweiterungen)
-- [x] SQLDelight-Schema mit allen Tabellen (`songs`, `books`, JoinTable, `user_data`, `lyrics`, `user_comments`)
+- [x] Projektstruktur und Gradle-Skripte angelegt
+- [x] Datenmodelle (`Song`, `Book`, JoinTable, UserComment) im Shared-Modul
+- [x] SQLDelight-Schema mit allen Tabellen (songs, books, JoinTable, user_data, lyrics, user_comments)
 - [x] Dummy-Repository und Suchfunktion (mit Beispiel-Songliste)
 - [x] MainActivity mit Compose-UI und Dummy-Daten
-- [x] Accessibility-Strings in `strings.xml` (_a11y Platzhalter)
+- [x] Accessibility-Strings in strings.xml (_a11y Platzhalter)
 - [x] Beispiel-Test für Suche und User-Kommentare im Shared-Modul (TDD)
+- [x] Testabdeckung für alle bisherigen Features (Favoriten, Suche, Kommentare Dummy)
 - [ ] Testabdeckung für alle neuen Features (TODO)
-- [ ] Integration von Datenimport aus `dev/data.csv` (TODO)
+- [ ] Integration von Datenimport aus dev/data.csv (TODO)
 - [ ] OCR-Import für PDFs vorbereiten (TODO)
 - [ ] Fehlerdiagnose für Build und Gradle-Konfiguration automatisieren (TODO)
+- [ ] Integrationstests für DatabaseSongRepository (echte DB, nicht nur Dummy)
+- [ ] Implementierung und Test von echten User-Kommentaren (persistieren/lesen)
+- [ ] Test für Buch-Kommentare analog zu Song-Kommentaren
+- [ ] Test für Notizen (user_data.note), falls benötigt
+- [ ] Test für Lyrics-Suche, falls Lyrics-Table genutzt wird
+- [ ] Import- und Fehlerfall-Tests für CSV und OCR
+- [ ] README und strings.xml auf aktuellen Stand halten
 
 # Ordner- und Modulstruktur:
 Erzeuge folgende Ordnerstruktur:
