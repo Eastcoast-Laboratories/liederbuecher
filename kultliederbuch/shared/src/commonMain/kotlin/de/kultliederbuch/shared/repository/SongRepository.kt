@@ -75,6 +75,9 @@ class CsvSongRepository(csvData: String) : SongRepository {
     private val songs = importResult.songs.toMutableList()
     private val books = importResult.books
     private val bookSongPages = importResult.bookSongPages
+    
+    // Diagnoseinformationen für Debugging
+    val diagnosticInfo: String = importResult.diagnosticInfo
 
     override suspend fun getAllSongs(): List<Song> = songs
     override suspend fun searchSongs(query: String): List<Song> =
