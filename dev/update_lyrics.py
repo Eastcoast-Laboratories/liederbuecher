@@ -89,6 +89,7 @@ def load_song_page_mapping() -> Dict[str, Dict[int, List[Tuple[str, str]]]]:
                     "title": title,
                     "artist": artist,
                     "lyrics": "",
+                    "chords": "",
                     "book_id": book_id,
                     "book_page": None,  # Wird später gesetzt
                     "book_page_notes": None  # Wird später gesetzt
@@ -146,11 +147,44 @@ def extract_pages_from_ocr(ocr_file: str) -> Dict[int, str]:
     return pages
 
 # Reinige Liedtext-Inhalte
-def clean_lyrics(text: str) -> str:
-    # Entferne überflüssige Leerzeichen und Zeilenumbrüche
-    text = re.sub(r'\s+', ' ', text)
-    text = re.sub(r'\n\s*\n', '\n', text)
-    return text.strip()
+def clean_lyrics(text: str) -> Tuple[str, str]:
+    # Entferne Copyright-Hinweise
+    text = re.sub(r'\s*[\u00A9\(c\)][^\n]+?(Copyright|Rights Reserved|Secured|Reproduced|permission)[^\n]+', '', text, flags=re.IGNORECASE)
+    
+    # Entferne M + T: Autorennennungen
+    text = re.sub(r'\s*M\s*\+\s*T\s*:[^\n]+', '', text)
+    
+    # Extrahiere Akkorde
+    # Muster: Akkorde wie A, Am, G7, Dsus4, F#m, E7, usw.
+    chord_pattern = r'\b([A-G][#b]?(?:maj|min|m|sus|dim|aug|\+|\-|\d)?\d*(?:\/[A-G][#b]?)?)\b'
+    
+    # Finde Zeilen, die hauptsächlich aus Akkorden bestehen (z.B. "G Am C Am Em D G")
+    chord_lines = []
+    lines = text.split('\n')
+    processed_lines = []
+    
+    for line in lines:
+        # Zähle die Akkorde in der Zeile
+        chords = re.findall(chord_pattern, line)
+        words = re.findall(r'\b\w+\b', line)
+        
+        # Wenn die Zeile hauptsächlich aus Akkorden besteht
+        if len(chords) > 0 and len(chords) / (len(words) + 0.1) > 0.7:
+            chord_lines.append(line.strip())
+            # Entferne diese Zeile aus dem Text
+            continue
+        
+        processed_lines.append(line)
+    
+    # Kombiniere alle gefundenen Akkordzeilen
+    chords = ' '.join(chord_lines)
+    
+    # Bereinige den verbleibenden Text
+    cleaned_text = '\n'.join(processed_lines)
+    cleaned_text = re.sub(r'\s+', ' ', cleaned_text)
+    cleaned_text = re.sub(r'\n\s*\n', '\n', cleaned_text)
+    
+    return cleaned_text.strip(), chords.strip()
 
 # Hauptfunktion zum Extrahieren und Zuordnen der Songtexte
 def update_song_lyrics():
@@ -183,7 +217,9 @@ def update_song_lyrics():
             # In einer realen Anwendung würde man hier eine komplexere Logik implementieren
             for song_id, title, artist in songs_on_page:
                 if song_id in song_data:
-                    song_data[song_id]["lyrics"] = clean_lyrics(page_content)
+                    cleaned_lyrics, chords = clean_lyrics(page_content)
+                    song_data[song_id]["lyrics"] = cleaned_lyrics
+                    song_data[song_id]["chords"] = chords
                     # Seitenzahl und Buch nochmal explizit setzen (zur Sicherheit)
                     song_data[song_id]["source_page"] = page_num
                     song_data[song_id]["source_book"] = book_id
@@ -204,7 +240,7 @@ def update_song_lyrics():
     try:
         with open(csv_output, 'w', encoding='utf-8') as f:
             # CSV-Header
-            f.write("Künstler,Titel,Lyrics,Buch,Seite,Seite_Noten\n")
+            f.write("Künstler,Titel,Lyrics,Akkorde,Buch,Seite,Seite_Noten\n")
             
             # Schreibe Songs
             for song in song_data.values():
@@ -212,10 +248,11 @@ def update_song_lyrics():
                     artist = song["artist"].replace('"', '""')  # Escape Anführungszeichen
                     title = song["title"].replace('"', '""')
                     lyrics = song["lyrics"].replace('"', '""')
+                    chords = song.get("chords", "").replace('"', '""')
                     book_id = song["book_id"]
                     page = song["book_page"] if song["book_page"] is not None else ""
                     page_notes = song["book_page_notes"] if song["book_page_notes"] is not None else ""
-                    f.write(f'"{artist}","{title}","{lyrics}","{book_id}","{page}","{page_notes}"\n')
+                    f.write(f'"{artist}","{title}","{lyrics}","{chords}","{book_id}","{page}","{page_notes}"\n')
         logger.info(f"CSV für Import erstellt: {csv_output}")
     except Exception as e:
         logger.error(f"Fehler beim Erstellen der CSV-Datei: {e}")
