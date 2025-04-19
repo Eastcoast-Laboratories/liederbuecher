@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 # Mapping von Buchnamen zu Buchnummern
 BOOK_MAPPING = {
     "Das Ding 1 (grün)": "1",
-    "Das Ding 2 (rot)": "2",
-    "Das Ding 3 (gelb)": "3",
+    "Das Ding 2 (rot)": "3",
+    "Das Ding 3 (gelb)": "2",
     "Das Ding 4 (blau)": "4",
     "Das Ding 5 (grau)": "5",
     "Weihnachtslieder": "W"
