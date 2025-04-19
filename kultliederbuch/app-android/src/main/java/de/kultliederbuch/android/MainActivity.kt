@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,10 +36,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -55,7 +57,13 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Send
 import androidx.compose.ui.res.painterResource
+import android.content.Intent
+import androidx.core.content.ContextCompat.startActivity
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -101,6 +109,10 @@ fun KultliederbuchApp() {
     var selectedSong by remember { mutableStateOf<de.kultliederbuch.shared.model.Song?>(null) }
     var showSongDetails by remember { mutableStateOf(false) }
     
+    val (songComments, setSongComments) = remember { mutableStateOf(mapOf<String, String>()) }
+    val (currentComment, setCurrentComment) = remember { mutableStateOf("") }
+    val (showCommentInput, setShowCommentInput) = remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         Timber.d("Loading data...")
         try {
@@ -452,6 +464,9 @@ fun KultliederbuchApp() {
             it.title.equals(song.title, ignoreCase = true) && 
             it.artist.equals(song.author, ignoreCase = true)
         }
+        val context = LocalContext.current
+        val songComment = songComments.getOrDefault(song.id, "")
+        val uniqueChords = songWithLyrics?.chords?.let { extractUniqueChords(it) } ?: emptyList()
         
         Dialog(
             onDismissRequest = { showSongDetails = false },
@@ -469,11 +484,106 @@ fun KultliederbuchApp() {
                         .fillMaxSize()
                         .padding(16.dp)
                 ) {
-                    Text(
-                        text = song.title,
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    // Titel-Zeile mit Favorite und Share-Buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Titel
+                        Text(
+                            text = song.title,
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.weight(1f)
+                        )
+                        
+                        // Action-Buttons
+                        Row {
+                            // Favoriten-Button
+                            IconButton(onClick = { 
+                                val newFavorites = favorites.toMutableSet()
+                                if (favorites.contains(song.id)) {
+                                    newFavorites.remove(song.id)
+                                } else {
+                                    newFavorites.add(song.id)
+                                }
+                                setFavorites(newFavorites)
+                                Timber.d("Favorit umgeschaltet in Detailansicht: ${song.title}")
+                            }) {
+                                Icon(
+                                    imageVector = if (favorites.contains(song.id)) {
+                                        Icons.Filled.Favorite
+                                    } else {
+                                        Icons.Outlined.FavoriteBorder
+                                    },
+                                    contentDescription = "Favorit markieren",
+                                    tint = if (favorites.contains(song.id)) {
+                                        MaterialTheme.colorScheme.error // Rot für Favoriten
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurface
+                                    }
+                                )
+                            }
+                            
+                            // Kommentar-Button
+                            IconButton(onClick = { 
+                                setShowCommentInput(!showCommentInput)
+                                // Wenn das Feld geöffnet wird und es einen Kommentar gibt, diesen als Ausgangswert setzen
+                                if (!showCommentInput && songComment.isNotEmpty()) {
+                                    setCurrentComment(songComment)
+                                }
+                                Timber.d("Kommentarfeld umgeschaltet für: ${song.title}")
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Info,
+                                    contentDescription = "Kommentar hinzufügen",
+                                    tint = MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                            
+                            // Share-Button
+                            IconButton(onClick = { 
+                                val shareText = buildString {
+                                    append("${song.title} - ${song.author}\n")
+                                    if (songWithLyrics?.lyrics?.isNotEmpty() == true) {
+                                        append("\n${songWithLyrics.lyrics}")
+                                    }
+                                    
+                                    // Buchinfos hinzufügen
+                                    val pages = songPages.getOrDefault(song.id, emptyList())
+                                    if (pages.isNotEmpty()) {
+                                        append("\n\nBuchinfos:\n")
+                                        pages.forEach { page ->
+                                            val book = bookMap[page.bookId]
+                                            val bookInfo = getBookColorInfo(page.bookId)
+                                            val pageText = if (page.pageNotes != null) {
+                                                page.pageNotes.toString()
+                                            } else {
+                                                page.page?.toString() ?: ""
+                                            }
+                                            append("${bookInfo.first}: Seite $pageText\n")
+                                        }
+                                    }
+                                }
+                                
+                                val sendIntent = Intent().apply {
+                                    action = Intent.ACTION_SEND
+                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                    type = "text/plain"
+                                }
+                                val shareIntent = Intent.createChooser(sendIntent, "Teile Songtext")
+                                context.startActivity(shareIntent)
+                                Timber.d("Song geteilt: ${song.title}")
+                            }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Share,
+                                    contentDescription = "Teilen",
+                                    tint = MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                        }
+                    }
                     
                     Text(
                         text = song.author,
@@ -481,6 +591,67 @@ fun KultliederbuchApp() {
                         color = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
+                    
+                    // Kommentarfeld (nur anzeigen, wenn aktiviert)
+                    if (showCommentInput) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = currentComment,
+                                onValueChange = { setCurrentComment(it) },
+                                label = { Text("Kommentar") },
+                                placeholder = { Text("Dein Kommentar zum Song...") },
+                                modifier = Modifier.weight(1f),
+                                maxLines = 2
+                            )
+                            IconButton(
+                                onClick = {
+                                    // Kommentar speichern
+                                    val updatedComments = songComments.toMutableMap()
+                                    updatedComments[song.id] = currentComment
+                                    setSongComments(updatedComments)
+                                    setCurrentComment("") // Feld leeren
+                                    setShowCommentInput(false) // Feld ausblenden
+                                    Timber.d("Kommentar gespeichert für: ${song.title}")
+                                },
+                                modifier = Modifier.padding(start = 8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Send,
+                                    contentDescription = "Kommentar speichern"
+                                )
+                            }
+                        }
+                    }
+                    
+                    // Gespeicherten Kommentar anzeigen, falls vorhanden
+                    if (songComment.isNotEmpty() && !showCommentInput) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .padding(8.dp)
+                        ) {
+                            Text(
+                                text = "Dein Kommentar:",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = songComment,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                     
                     // Song-Pages Anzeige
                     val pages = songPages.getOrDefault(song.id, emptyList())
@@ -490,7 +661,7 @@ fun KultliederbuchApp() {
                         ) {
                             pages.forEach { page ->
                                 val book = bookMap[page.bookId]
-                                val color = getBookColor(page.bookId)
+                                val colorInfo = getBookColorInfo(page.bookId)
                                 val pageText = if (page.pageNotes != null) {
                                     page.pageNotes.toString()
                                 } else {
@@ -498,7 +669,7 @@ fun KultliederbuchApp() {
                                 }
                                 
                                 Surface(
-                                    color = color,
+                                    color = colorInfo.second,
                                     shape = RoundedCornerShape(4.dp),
                                     modifier = Modifier.padding(end = 8.dp)
                                 ) {
@@ -522,28 +693,42 @@ fun KultliederbuchApp() {
                                 .weight(1f)
                         ) {
                             // Display chords (if available)
-                            if (songWithLyrics.chords.isNotEmpty()) {
+                            if (uniqueChords.isNotEmpty()) {
                                 item {
                                     Text(
-                                        text = "Chords:",
+                                        text = "Akkorde:",
                                         style = MaterialTheme.typography.titleSmall,
                                         color = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
                                     )
                                     
-                                    Text(
-                                        text = songWithLyrics.chords,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontFamily = FontFamily.Monospace,
-                                        modifier = Modifier.padding(bottom = 12.dp)
-                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.Start
+                                    ) {
+                                        uniqueChords.forEach { chord ->
+                                            Surface(
+                                                color = MaterialTheme.colorScheme.primaryContainer,
+                                                shape = RoundedCornerShape(4.dp),
+                                                modifier = Modifier.padding(end = 8.dp, bottom = 8.dp)
+                                            ) {
+                                                Text(
+                                                    text = chord,
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontFamily = FontFamily.Monospace,
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                             }
                             
                             // Display lyrics
                             item {
                                 Text(
-                                    text = "Lyrics:",
+                                    text = "Songtext:",
                                     style = MaterialTheme.typography.titleSmall,
                                     color = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.padding(bottom = 8.dp)
@@ -603,4 +788,15 @@ fun getBookColorInfo(buchId: String): Pair<String, Color> {
 
 fun getBookColor(buchId: String): Color {
     return getBookColorInfo(buchId).second
+}
+
+// Extrahiere einzigartige Akkorde aus einem Akkord-String
+fun extractUniqueChords(chordText: String): List<String> {
+    // Regulärer Ausdruck, der gängige Akkordmuster erkennt
+    // z.B. A, Am, A7, Amaj7, A#, C#m, etc.
+    val chordPattern = "[A-G][#b]?(m|maj|min|sus|dim|aug|\\+|-|7|9|11|13|maj7|min7|m7|dim7|aug7|7sus4|add9|madd9)*".toRegex()
+    val foundChords = chordPattern.findAll(chordText).map { it.value }.toList()
+    
+    // Filtere doppelte Akkorde heraus und sortiere sie
+    return foundChords.toSet().toList().sorted()
 }
