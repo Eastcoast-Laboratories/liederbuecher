@@ -160,15 +160,29 @@ fun KultliederbuchApp() {
             val authorMatch = searchInAuthor && song.author.contains(search, ignoreCase = true)
             
             // Textsuche in den aufbereiteten Songtexten - nur wenn notwendig
-            val lyricsMatch = if (searchInLyrics && !titleMatch && !authorMatch) {
-                // Vermeidet unnötige Suchen, wenn bereits ein Match gefunden wurde
+            val lyricsMatch = if (searchInLyrics) {
+                // Suche den aktuellen Song in den JSON-Daten
                 val matchingSongWithLyrics = songsWithLyrics.find { songWithLyrics ->
                     (songWithLyrics.title.equals(song.title, ignoreCase = true) &&
-                     songWithLyrics.artist.equals(song.author, ignoreCase = true)) &&
-                     songWithLyrics.lyrics.contains(search, ignoreCase = true)
+                     songWithLyrics.artist.equals(song.author, ignoreCase = true))
                 }
                 
-                matchingSongWithLyrics != null
+                // Wenn der Song gefunden wurde, prüfe ob der Suchbegriff im Titel ODER im Text enthalten ist
+                if (matchingSongWithLyrics != null) {
+                    val titleContainsSearch = matchingSongWithLyrics.title.contains(search, ignoreCase = true)
+                    val lyricsContainSearch = matchingSongWithLyrics.lyrics.contains(search, ignoreCase = true)
+                    
+                    if (titleContainsSearch) {
+                        Timber.d("'$search' gefunden im Titel: ${matchingSongWithLyrics.title}")
+                    }
+                    if (lyricsContainSearch) {
+                        Timber.d("'$search' gefunden im Text von: ${matchingSongWithLyrics.title}")
+                    }
+                    
+                    titleContainsSearch || lyricsContainSearch
+                } else {
+                    false
+                }
             } else {
                 false
             }
