@@ -4,8 +4,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
@@ -43,6 +55,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.ui.res.painterResource
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -295,121 +308,137 @@ fun KultliederbuchApp() {
     }
 
     MaterialTheme {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-            OutlinedTextField(
-                value = search,
-                onValueChange = { setSearch(it) },
-                label = { Text(text = "Suche nach Titel, Autor oder Text ...") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { contentDescription = "search_bar_a11y" }
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Hintergrundbild mit niedriger Deckkraft
+            Image(
+                painter = painterResource(id = R.drawable.app_background),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+                alpha = 0.5f
             )
-            Row(
+            
+            // Hauptinhalt
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .fillMaxSize()
+                    .padding(16.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    Checkbox(
-                        checked = searchInTitle,
-                        onCheckedChange = { isChecked ->
-                            // Wenn alle Optionen deaktiviert würden, Titel und Autor wieder aktivieren
-                            if (!isChecked && !searchInAuthor && !searchInLyrics) {
-                                setSearchInTitle(true)
-                                setSearchInAuthor(true)
-                            } else {
-                                setSearchInTitle(isChecked)
+                OutlinedTextField(
+                    value = search,
+                    onValueChange = { setSearch(it) },
+                    label = { Text(text = "Suche nach Titel, Autor oder Text ...") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .semantics { contentDescription = "search_bar_a11y" }
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Checkbox(
+                            checked = searchInTitle,
+                            onCheckedChange = { isChecked ->
+                                // Wenn alle Optionen deaktiviert würden, Titel und Autor wieder aktivieren
+                                if (!isChecked && !searchInAuthor && !searchInLyrics) {
+                                    setSearchInTitle(true)
+                                    setSearchInAuthor(true)
+                                } else {
+                                    setSearchInTitle(isChecked)
+                                }
                             }
-                        }
-                    )
-                    Text("Titel", modifier = Modifier.padding(start = 2.dp))
-                }
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    Checkbox(
-                        checked = searchInAuthor,
-                        onCheckedChange = { isChecked ->
-                            // Wenn alle Optionen deaktiviert würden, Titel und Autor wieder aktivieren
-                            if (!isChecked && !searchInTitle && !searchInLyrics) {
-                                setSearchInTitle(true)
-                                setSearchInAuthor(true)
-                            } else {
-                                setSearchInAuthor(isChecked)
+                        )
+                        Text("Titel", modifier = Modifier.padding(start = 2.dp))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Checkbox(
+                            checked = searchInAuthor,
+                            onCheckedChange = { isChecked ->
+                                // Wenn alle Optionen deaktiviert würden, Titel und Autor wieder aktivieren
+                                if (!isChecked && !searchInTitle && !searchInLyrics) {
+                                    setSearchInTitle(true)
+                                    setSearchInAuthor(true)
+                                } else {
+                                    setSearchInAuthor(isChecked)
+                                }
                             }
-                        }
-                    )
-                    Text("Autor", modifier = Modifier.padding(start = 2.dp))
-                }
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    Checkbox(
-                        checked = searchInLyrics,
-                        onCheckedChange = { 
-                            // Wenn alle Optionen deaktiviert würden, Titel und Autor aktivieren
-                            if (!it && !searchInTitle && !searchInAuthor) {
-                                setSearchInTitle(true)
-                                setSearchInAuthor(true)
-                                setSearchInLyrics(false)
-                            } else {
-                                setSearchInLyrics(it)
+                        )
+                        Text("Autor", modifier = Modifier.padding(start = 2.dp))
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Checkbox(
+                            checked = searchInLyrics,
+                            onCheckedChange = { 
+                                // Wenn alle Optionen deaktiviert würden, Titel und Autor aktivieren
+                                if (!it && !searchInTitle && !searchInAuthor) {
+                                    setSearchInTitle(true)
+                                    setSearchInAuthor(true)
+                                    setSearchInLyrics(false)
+                                } else {
+                                    setSearchInLyrics(it)
+                                }
+                                Timber.d("Textsuche ${if(it) "aktiviert" else "deaktiviert"}")
                             }
-                            Timber.d("Textsuche ${if(it) "aktiviert" else "deaktiviert"}")
-                        }
-                    )
-                    Text("Text", modifier = Modifier.padding(start = 2.dp))
-                }
-                
-                // Favoriten-Filter
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    Checkbox(
-                        checked = showOnlyFavorites,
-                        onCheckedChange = { setShowOnlyFavorites(it) }
-                    )
-                    Icon(
-                        imageVector = Icons.Filled.Favorite,
-                        contentDescription = "Nur Favoriten anzeigen",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Text("", modifier = Modifier.padding(start = 2.dp))
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            val searchInfoText = if (search.length < 3 && search.isNotEmpty()) {
-                "${songs.size} Lieder (Bitte mind. 3 Zeichen für die Suche eingeben)"
-            } else if (search.length >= 3) {
-                "${filteredSongs.size} Lieder gefunden für '${search}'"
-            } else {
-                "${songs.size} Lieder"
-            }
-            Text(text = searchInfoText, style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(8.dp))
-            LazyColumn {
-                itemsIndexed(filteredSongs) { index, song ->
-                    SongItem(
-                        song = song,
-                        pages = songPages.getOrDefault(song.id, emptyList()),
-                        books = bookMap,
-                        onClick = {
-                            // Bei Klick auf einen Song die Detailansicht öffnen
-                            selectedSong = song
-                            showSongDetails = true
-                        },
-                        isFavorite = favorites.contains(song.id),
-                        onFavoriteToggle = {
-                            // Favoriten-Status umschalten
-                            val newFavorites = favorites.toMutableSet()
-                            if (favorites.contains(song.id)) {
-                                newFavorites.remove(song.id)
-                            } else {
-                                newFavorites.add(song.id)
-                            }
-                            setFavorites(newFavorites)
-                            Timber.d("Favoriten aktualisiert: ${newFavorites.size} Songs")
-                        }
-                    )
+                        )
+                        Text("Text", modifier = Modifier.padding(start = 2.dp))
+                    }
                     
-                    if (index < filteredSongs.lastIndex) {
-                        Divider()
+                    // Favoriten-Filter
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Checkbox(
+                            checked = showOnlyFavorites,
+                            onCheckedChange = { setShowOnlyFavorites(it) }
+                        )
+                        Icon(
+                            imageVector = Icons.Filled.Favorite,
+                            contentDescription = "Nur Favoriten anzeigen",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Text("", modifier = Modifier.padding(start = 2.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                val searchInfoText = if (search.length < 3 && search.isNotEmpty()) {
+                    "${songs.size} Lieder (Bitte mind. 3 Zeichen für die Suche eingeben)"
+                } else if (search.length >= 3) {
+                    "${filteredSongs.size} Lieder gefunden für '${search}'"
+                } else {
+                    "${songs.size} Lieder"
+                }
+                Text(text = searchInfoText, style = MaterialTheme.typography.titleLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyColumn {
+                    itemsIndexed(filteredSongs) { index, song ->
+                        SongItem(
+                            song = song,
+                            pages = songPages.getOrDefault(song.id, emptyList()),
+                            books = bookMap,
+                            onClick = {
+                                // Bei Klick auf einen Song die Detailansicht öffnen
+                                selectedSong = song
+                                showSongDetails = true
+                            },
+                            isFavorite = favorites.contains(song.id),
+                            onFavoriteToggle = {
+                                // Favoriten-Status umschalten
+                                val newFavorites = favorites.toMutableSet()
+                                if (favorites.contains(song.id)) {
+                                    newFavorites.remove(song.id)
+                                } else {
+                                    newFavorites.add(song.id)
+                                }
+                                setFavorites(newFavorites)
+                                Timber.d("Favoriten aktualisiert: ${newFavorites.size} Songs")
+                            }
+                        )
+                        
+                        if (index < filteredSongs.lastIndex) {
+                            Divider()
+                        }
                     }
                 }
             }
