@@ -38,6 +38,11 @@ import de.kultliederbuch.shared.repository.CsvSongRepository
 import de.kultliederbuch.shared.util.ResourceHelper
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,6 +81,8 @@ fun KultliederbuchApp() {
     val (searchInTitle, setSearchInTitle) = remember { mutableStateOf(true) }
     val (searchInAuthor, setSearchInAuthor) = remember { mutableStateOf(true) }
     val (searchInLyrics, setSearchInLyrics) = remember { mutableStateOf(true) }
+    val (showOnlyFavorites, setShowOnlyFavorites) = remember { mutableStateOf(false) }
+    val (favorites, setFavorites) = remember { mutableStateOf(setOf<String>()) } // Set von Song-IDs
     
     // Song-Detailansicht
     var selectedSong by remember { mutableStateOf<de.kultliederbuch.shared.model.Song?>(null) }
@@ -152,10 +159,15 @@ fun KultliederbuchApp() {
     
     // Filtere Songs basierend auf Suchkriterien
     val filteredSongs = if (search.length < 3) {
-        songs
+        // Wenn nur Favoriten angezeigt werden sollen, filtere entsprechend
+        if (showOnlyFavorites) {
+            songs.filter { song -> favorites.contains(song.id) }
+        } else {
+            songs
+        }
     } else {
         // Suche nur ausführen, wenn mindestens 3 Zeichen eingegeben wurden
-        songs.filter { song ->
+        val searchFilteredSongs = songs.filter { song ->
             val titleMatch = searchInTitle && song.title.contains(search, ignoreCase = true)
             val authorMatch = searchInAuthor && song.author.contains(search, ignoreCase = true)
             
@@ -189,6 +201,13 @@ fun KultliederbuchApp() {
             
             titleMatch || authorMatch || lyricsMatch
         }
+        
+        // Zusaätzlicher Filter für Favoriten
+        if (showOnlyFavorites) {
+            searchFilteredSongs.filter { song -> favorites.contains(song.id) }
+        } else {
+            searchFilteredSongs
+        }
     }
 
     @Composable
@@ -196,7 +215,9 @@ fun KultliederbuchApp() {
         song: de.kultliederbuch.shared.model.Song,
         pages: List<de.kultliederbuch.shared.model.BookSongPage>,
         books: Map<String, de.kultliederbuch.shared.model.Book>,
-        onClick: () -> Unit
+        onClick: () -> Unit,
+        isFavorite: Boolean,
+        onFavoriteToggle: () -> Unit
     ) {
         Card(
             modifier = Modifier
@@ -215,6 +236,19 @@ fun KultliederbuchApp() {
                     Text(text = song.title, style = MaterialTheme.typography.titleMedium)
                     Text(text = song.author, style = MaterialTheme.typography.bodyMedium)
                 }
+                
+                // Herz-Icon zum Favorisieren
+                IconButton(
+                    onClick = { onFavoriteToggle() },
+                    modifier = Modifier.size(40.dp).padding(end = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                        contentDescription = if (isFavorite) "Von Favoriten entfernen" else "Zu Favoriten hinzufügen",
+                        tint = if (isFavorite) Color.Red else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+                
                 val colorToPages = mutableMapOf<String, Pair<Int?, Int?>>()
                 pages.forEach { page ->
                     val (colorName, _) = getBookColorInfo(page.bookId)
@@ -265,7 +299,7 @@ fun KultliederbuchApp() {
             OutlinedTextField(
                 value = search,
                 onValueChange = { setSearch(it) },
-                label = { Text(text = "Suche nach Titel, Autor oder Text (mind. 3 Zeichen)...") },
+                label = { Text(text = "Suche nach Titel, Autor oder Text ...") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .semantics { contentDescription = "search_bar_a11y" }
@@ -279,26 +313,64 @@ fun KultliederbuchApp() {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                     Checkbox(
                         checked = searchInTitle,
-                        onCheckedChange = { setSearchInTitle(it) }
+                        onCheckedChange = { isChecked ->
+                            // Wenn alle Optionen deaktiviert würden, Titel und Autor wieder aktivieren
+                            if (!isChecked && !searchInAuthor && !searchInLyrics) {
+                                setSearchInTitle(true)
+                                setSearchInAuthor(true)
+                            } else {
+                                setSearchInTitle(isChecked)
+                            }
+                        }
                     )
-                    Text("Titel", modifier = Modifier.padding(start = 4.dp))
+                    Text("Titel", modifier = Modifier.padding(start = 2.dp))
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                     Checkbox(
                         checked = searchInAuthor,
-                        onCheckedChange = { setSearchInAuthor(it) }
+                        onCheckedChange = { isChecked ->
+                            // Wenn alle Optionen deaktiviert würden, Titel und Autor wieder aktivieren
+                            if (!isChecked && !searchInTitle && !searchInLyrics) {
+                                setSearchInTitle(true)
+                                setSearchInAuthor(true)
+                            } else {
+                                setSearchInAuthor(isChecked)
+                            }
+                        }
                     )
-                    Text("Autor", modifier = Modifier.padding(start = 4.dp))
+                    Text("Autor", modifier = Modifier.padding(start = 2.dp))
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                     Checkbox(
                         checked = searchInLyrics,
                         onCheckedChange = { 
-                            setSearchInLyrics(it)
+                            // Wenn alle Optionen deaktiviert würden, Titel und Autor aktivieren
+                            if (!it && !searchInTitle && !searchInAuthor) {
+                                setSearchInTitle(true)
+                                setSearchInAuthor(true)
+                                setSearchInLyrics(false)
+                            } else {
+                                setSearchInLyrics(it)
+                            }
                             Timber.d("Textsuche ${if(it) "aktiviert" else "deaktiviert"}")
                         }
                     )
-                    Text("Text", modifier = Modifier.padding(start = 4.dp))
+                    Text("Text", modifier = Modifier.padding(start = 2.dp))
+                }
+                
+                // Favoriten-Filter
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    Checkbox(
+                        checked = showOnlyFavorites,
+                        onCheckedChange = { setShowOnlyFavorites(it) }
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.Favorite,
+                        contentDescription = "Nur Favoriten anzeigen",
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text("", modifier = Modifier.padding(start = 2.dp))
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -321,6 +393,18 @@ fun KultliederbuchApp() {
                             // Bei Klick auf einen Song die Detailansicht öffnen
                             selectedSong = song
                             showSongDetails = true
+                        },
+                        isFavorite = favorites.contains(song.id),
+                        onFavoriteToggle = {
+                            // Favoriten-Status umschalten
+                            val newFavorites = favorites.toMutableSet()
+                            if (favorites.contains(song.id)) {
+                                newFavorites.remove(song.id)
+                            } else {
+                                newFavorites.add(song.id)
+                            }
+                            setFavorites(newFavorites)
+                            Timber.d("Favoriten aktualisiert: ${newFavorites.size} Songs")
                         }
                     )
                     
