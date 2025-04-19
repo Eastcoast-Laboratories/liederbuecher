@@ -7,10 +7,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import de.kultliederbuch.shared.repository.CsvSongRepository
 import de.kultliederbuch.shared.util.ResourceHelper
 import kotlinx.coroutines.runBlocking
@@ -98,6 +104,20 @@ fun KultliederbuchApp() {
         }
     }
 
+    // Hilfsfunktion: Buchnummer zu Farbnamen und Compose-Farbe
+    fun getBookColorInfo(buchId: String): Pair<String, Color> {
+        // Extrahiere Buchnummer
+        val nummer = Regex("book_(\\w+)").find(buchId)?.groupValues?.get(1)?.replace("_notes", "") ?: ""
+        return when (nummer) {
+            "1" -> "grün" to Color(0xFF4CAF50)
+            "2" -> "rot" to Color(0xFFF44336)
+            "3" -> "gelb" to Color(0xFFFFEB3B)
+            "4" -> "blau" to Color(0xFF2196F3)
+            "5" -> "grau" to Color(0xFF9E9E9E)
+            else -> "?" to Color.LightGray
+        }
+    }
+
     MaterialTheme {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             OutlinedTextField(
@@ -117,31 +137,52 @@ fun KultliederbuchApp() {
                     Card(modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text(text = song.title, style = MaterialTheme.typography.titleMedium)
-                            Text(text = song.author, style = MaterialTheme.typography.bodyMedium)
-                            
-                            // Zeige Buch und Seitennummern an
+                        Row(
+                            modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(text = song.title, style = MaterialTheme.typography.titleMedium)
+                                Text(text = song.author, style = MaterialTheme.typography.bodyMedium)
+                            }
+                            // Anzeige der Buchfarben und Seitenzahlen
                             val pages = songPages[song.id] ?: emptyList()
-                            if (pages.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = "Vorhanden in:",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                )
-                                pages.forEach { bookPage ->
-                                    val book = bookMap[bookPage.bookId]
-                                    val pageInfo = when {
-                                        bookPage.page != null -> "Seite ${bookPage.page}"
-                                        bookPage.pageNotes != null -> "Seite ${bookPage.pageNotes}"
-                                        else -> ""
+                            // Map: Buchfarbe -> (Seite, SeiteNoten)
+                            val colorToPages = mutableMapOf<String, Pair<Int?, Int?>>()
+                            pages.forEach { page ->
+                                val (colorName, _) = getBookColorInfo(page.bookId)
+                                val prev = colorToPages[colorName] ?: (null to null)
+                                if (page.page != null) {
+                                    colorToPages[colorName] = page.page to prev.second
+                                } else if (page.pageNotes != null) {
+                                    colorToPages[colorName] = prev.first to page.pageNotes
+                                }
+                            }
+                            colorToPages.forEach { (colorName, seiten) ->
+                                val color = getBookColorInfo(pages.find { getBookColorInfo(it.bookId).first == colorName }?.bookId ?: "").second
+                                val seite = seiten.first
+                                val seiteNoten = seiten.second
+                                val seitenText = buildString {
+                                    if (seite != null) append(seite)
+                                    if (seiteNoten != null) {
+                                        if (isNotEmpty()) append("/")
+                                        append(seiteNoten)
                                     }
-                                    
-                                    Text(
-                                        text = "${book?.title ?: "Unbekanntes Buch"}: $pageInfo",
-                                        style = MaterialTheme.typography.bodySmall
-                                    )
+                                }
+                                if (seitenText.isNotEmpty()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(start = 8.dp)
+                                            .background(color, shape = RoundedCornerShape(8.dp))
+                                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                                    ) {
+                                        Text(
+                                            text = seitenText,
+                                            color = if (colorName == "gelb") Color.Black else Color.White,
+                                            fontSize = 22.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                 }
                             }
                         }

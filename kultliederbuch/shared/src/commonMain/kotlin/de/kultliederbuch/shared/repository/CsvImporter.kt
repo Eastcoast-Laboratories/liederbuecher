@@ -19,6 +19,35 @@ data class CsvImportResult(
  * Only supports the expected kultliederbuch CSV structure.
  */
 object CsvImporter {
+    // Hilfsfunktion: CSV-Zeile robust parsen (unterstützt Anführungszeichen und Kommas im Feld)
+    private fun parseCsvLine(line: String): List<String> {
+        val result = mutableListOf<String>()
+        var inQuotes = false
+        var value = StringBuilder()
+        var i = 0
+        while (i < line.length) {
+            val c = line[i]
+            when {
+                c == '"' -> {
+                    inQuotes = !inQuotes
+                    // Doppelte Anführungszeichen im Feld
+                    if (i + 1 < line.length && line[i + 1] == '"') {
+                        value.append('"')
+                        i++
+                    }
+                }
+                c == ',' && !inQuotes -> {
+                    result.add(value.toString().trim())
+                    value = StringBuilder()
+                }
+                else -> value.append(c)
+            }
+            i++
+        }
+        result.add(value.toString().trim())
+        return result
+    }
+
     fun import(csv: String): CsvImportResult {
         // Diagnose-Zeichenkette für detaillierte Fehleranalyse
         val diagnosticBuilder = StringBuilder()
@@ -38,7 +67,7 @@ object CsvImporter {
             return CsvImportResult(emptyList(), emptyList(), emptyList(), diagnosticBuilder.toString())
         }
         
-        val header = lines[0].split(",").map { it.trim() }
+        val header = parseCsvLine(lines[0])
         diagnosticBuilder.append("Header: ${header.joinToString(", ")}\n")
         
         val idxSeiteNoten = header.indexOfFirst { it.contains("Seite (Noten)") }
@@ -59,7 +88,7 @@ object CsvImporter {
         val bookSongPages = mutableListOf<BookSongPage>()
         
         for (line in lines.drop(1)) {
-            val cols = line.split(",").map { it.trim() }
+            val cols = parseCsvLine(line)
             if (cols.size < header.size) {
                 diagnosticBuilder.append("Zeile übersprungen (zu wenige Spalten): $line\n")
                 continue
