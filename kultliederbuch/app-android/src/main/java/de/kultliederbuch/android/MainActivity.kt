@@ -429,7 +429,7 @@ fun KultliederbuchApp() {
             
             // Lade die erweiterten Songs mit Texten aus der JSON-Datei
             try {
-                val jsonString = ResourceHelper.readResourceAsString("all_songs.json") ?: ""
+                val jsonString = ResourceHelper.readResourceAsString("songs_with_lyrics.json") ?: ""
                 if (jsonString.isNotEmpty()) {
                     val type = object : TypeToken<List<SongWithLyrics>>() {}.type
                     val songsList: List<SongWithLyrics> = Gson().fromJson(jsonString, type)
