@@ -217,7 +217,7 @@ fun SongDetailView(
             }
             // Songtext
             if (songWithLyrics != null && songWithLyrics.lyrics.isNotEmpty()) {
-                Text("Songtext:", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(bottom = 8.dp))
+                Text("Songtext:", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 8.dp, bottom = 8.dp))
                 Text(songWithLyrics.lyrics, style = MaterialTheme.typography.bodyMedium)
             } else {
                 Text("Kein Songtext verfügbar.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.tertiary)
@@ -241,12 +241,10 @@ fun SongDetailView(
                                     style = MaterialTheme.typography.bodyMedium,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
-                                // Noten-Icon für Notenbücher
                                 if (isNoteBook) {
                                     Text(
-                                        text = " 🎵",
-                                        fontSize = 18.sp,
-                                        modifier = Modifier.padding(start = 2.dp, end = 4.dp)
+                                        text = "🎵",
+                                        fontSize = 18.sp
                                     )
                                 }
                             }
@@ -278,10 +276,11 @@ fun SongItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
+            // Left: Title, author, comment
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = song.title,
@@ -295,41 +294,6 @@ fun SongItem(
                         color = MaterialTheme.colorScheme.secondary
                     )
                 }
-                
-                // Buchseiten anzeigen
-                if (pages.isNotEmpty()) {
-                    Row(modifier = Modifier.padding(top = 4.dp)) {
-                        pages.forEachIndexed { idx, page ->
-                            val colorInfo = getBookColorInfo(page.bookId)
-                            val isNoteBook = page.bookId.contains("_notes")
-                            val pageText = if (page.pageNotes != null) page.pageNotes.toString() else page.page?.toString() ?: ""
-                            Surface(
-                                color = colorInfo.second,
-                                shape = RoundedCornerShape(4.dp),
-                                modifier = Modifier.padding(end = 8.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        text = pageText,
-                                        color = Color.White,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                    )
-                                    // Noten-Icon für Notenbücher
-                                    if (isNoteBook) {
-                                        Text(
-                                            text = " 🎵",
-                                            fontSize = 18.sp,
-                                            modifier = Modifier.padding(start = 2.dp, end = 4.dp)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                // Kommentar-Indikator
                 val comment = songComments.getOrDefault(song.id, "")
                 if (!comment.isNullOrEmpty()) {
                     Text(
@@ -340,14 +304,56 @@ fun SongItem(
                     )
                 }
             }
-            
-            // Favoriten-Icon
-            IconButton(onClick = onFavoriteToggle) {
-                Icon(
-                    imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                    contentDescription = "Favorit markieren",
-                    tint = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-                )
+            // Right: Page numbers (vertical), heart below
+            Column(
+                horizontalAlignment = Alignment.End,
+                modifier = Modifier.padding(end = 0.dp)
+            ) {
+                if (pages.isNotEmpty()) {
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        modifier = Modifier.padding(bottom = 0.dp)
+                    ) {
+                        pages.forEach { page ->
+                            val colorInfo = getBookColorInfo(page.bookId)
+                            val isNoteBook = page.bookId.contains("_notes")
+                            val pageText = if (page.pageNotes != null) page.pageNotes.toString() else page.page?.toString() ?: ""
+                            Surface(
+                                color = colorInfo.second,
+                                shape = RoundedCornerShape(4.dp),
+                                modifier = Modifier.padding(bottom = 4.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = pageText,
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                    )
+                                    if (isNoteBook) {
+                                        Text(
+                                            text = "🎵",
+                                            fontSize = 18.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                IconButton(
+                    onClick = onFavoriteToggle,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .align(Alignment.End)
+                        .padding(top = 4.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                        contentDescription = "Favorit markieren",
+                        tint = if (isFavorite) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
         }
     }
