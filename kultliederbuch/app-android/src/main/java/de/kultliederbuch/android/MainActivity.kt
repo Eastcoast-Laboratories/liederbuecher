@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -68,6 +69,9 @@ import de.kultliederbuch.shared.repository.CsvSongRepository
 import de.kultliederbuch.shared.util.ResourceHelper
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 
 // Datenstruktur für die erweiterten Songs mit Texten und Akkorden
 data class SongWithLyrics(
@@ -138,6 +142,10 @@ fun SongDetailView(
     val scrollState = rememberScrollState()
     val songComment = songComments.getOrDefault(song.id, "")
     val uniqueChords = songWithLyrics?.chords?.let { extractUniqueChords(it) } ?: emptyList()
+    val commentFocusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        commentFocusRequester.requestFocus()
+    }
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -223,7 +231,7 @@ fun SongDetailView(
                 },
                 label = { Text("Kommentar") },
                 placeholder = { Text("Dein Kommentar zum Song...") },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().focusRequester(commentFocusRequester),
                 maxLines = 6,
                 singleLine = false,
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = TextImeAction.Default)
@@ -403,6 +411,8 @@ fun KultliederbuchApp() {
     var currentComment by remember { mutableStateOf("") }
     val setCurrentComment = { comment: String -> currentComment = comment }
     
+    val searchFocusRequester = remember { FocusRequester() }
+    
     // Lade Daten beim Start
     LaunchedEffect(key1 = "init") {
         Timber.plant(Timber.DebugTree())
@@ -530,31 +540,38 @@ fun KultliederbuchApp() {
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Suchleiste
-                Row(
+                // Song-Liste
+                LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                        .weight(1f)
+                        .padding(horizontal = 8.dp)
                 ) {
-                    OutlinedTextField(
-                        value = search,
-                        onValueChange = { setSearch(it) },
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 8.dp),
-                        placeholder = { Text("Suche nach Titel, Autor oder Text") },
-                        singleLine = true,
-                        trailingIcon = {
-                            if (search.isNotEmpty()) {
-                                IconButton(onClick = { setSearch("") }) {
-                                    Icon(Icons.Filled.Clear, contentDescription = "Suche löschen")
+                    itemsIndexed(filteredSongs) { _, song ->
+                        SongItem(
+                            song = song,
+                            pages = songPages.getOrDefault(song.id, emptyList()),
+                            books = bookMap,
+                            onClick = {
+                                selectedSong = song
+                                showSongDetails = true
+                                currentComment = songComments.getOrDefault(song.id, "")
+                                searchFocusRequester.freeFocus()
+                            },
+                            isFavorite = favorites.contains(song.id),
+                            onFavoriteToggle = {
+                                val newFavorites = favorites.toMutableSet()
+                                if (favorites.contains(song.id)) {
+                                    newFavorites.remove(song.id)
+                                } else {
+                                    newFavorites.add(song.id)
                                 }
-                            }
-                        }
-                    )
+                                setFavorites(newFavorites)
+                            },
+                            songComments = songComments
+                        )
+                    }
                 }
-                
                 // Checkbox section - individual checkboxes
                 Row(
                     modifier = Modifier
@@ -580,7 +597,6 @@ fun KultliederbuchApp() {
                                 .padding(start = 4.dp)
                         )
                     }
-                    
                     // Author checkbox
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -598,7 +614,6 @@ fun KultliederbuchApp() {
                                 .padding(start = 4.dp)
                         )
                     }
-                    
                     // Lyrics checkbox
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -616,7 +631,6 @@ fun KultliederbuchApp() {
                                 .padding(start = 4.dp)
                         )
                     }
-                    
                     // Favorites checkbox
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -635,40 +649,37 @@ fun KultliederbuchApp() {
                         )
                     }
                 }
-                
-                // Song-Liste
-                LazyColumn(
+                // Suchleiste ganz unten, ohne Padding
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
-                        .padding(horizontal = 8.dp)
+                        .padding(0.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    itemsIndexed(filteredSongs) { _, song ->
-                        SongItem(
-                            song = song,
-                            pages = songPages.getOrDefault(song.id, emptyList()),
-                            books = bookMap,
-                            onClick = {
-                                selectedSong = song
-                                showSongDetails = true
-                                currentComment = songComments.getOrDefault(song.id, "")
-                            },
-                            isFavorite = favorites.contains(song.id),
-                            onFavoriteToggle = {
-                                val newFavorites = favorites.toMutableSet()
-                                if (favorites.contains(song.id)) {
-                                    newFavorites.remove(song.id)
-                                } else {
-                                    newFavorites.add(song.id)
+                    OutlinedTextField(
+                        value = search,
+                        onValueChange = { setSearch(it) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(0.dp)
+                            .focusRequester(searchFocusRequester)
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    showSongDetails = false
                                 }
-                                setFavorites(newFavorites)
                             },
-                            songComments = songComments
-                        )
-                    }
+                        placeholder = { Text("Suche nach Titel, Autor oder Text") },
+                        singleLine = true,
+                        trailingIcon = {
+                            if (search.isNotEmpty()) {
+                                IconButton(onClick = { setSearch("") }) {
+                                    Icon(Icons.Filled.Clear, contentDescription = "Suche löschen")
+                                }
+                            }
+                        }
+                    )
                 }
             }
-            
             // Song-Detailansicht als Overlay
             if (showSongDetails && selectedSong != null) {
                 SongDetailView(
