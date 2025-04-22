@@ -140,7 +140,8 @@ fun SongDetailView(
     val uniqueChords = songWithLyrics?.chords?.let { extractUniqueChords(it) } ?: emptyList()
     Box(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
+            .fillMaxHeight(0.92f) // Not full height, leaves space for search bar
             .background(color = MaterialTheme.colorScheme.background)
             .zIndex(2f)
     ) {
@@ -178,6 +179,39 @@ fun SongDetailView(
                 color = MaterialTheme.colorScheme.secondary,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
+            // Buchseiten
+            if (songPages.isNotEmpty()) {
+                // Group pages: without notes first, then with notes
+                val pagesWithoutNotes = songPages.filter { !it.bookId.contains("_notes") }
+                val pagesWithNotes = songPages.filter { it.bookId.contains("_notes") }
+                Row(modifier = Modifier.padding(top = 12.dp)) {
+                    (pagesWithoutNotes + pagesWithNotes).forEachIndexed { idx: Int, page: BookSongPage ->
+                        val colorInfo = getBookColorInfo(page.bookId)
+                        val isNoteBook = page.bookId.contains("_notes")
+                        val pageText = if (page.pageNotes != null) page.pageNotes.toString() else page.page?.toString() ?: ""
+                        Surface(
+                            color = colorInfo.second,
+                            shape = RoundedCornerShape(4.dp),
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = pageText,
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                                if (isNoteBook) {
+                                    Text(
+                                        text = "🎵",
+                                        fontSize = 18.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             // Kommentar-Editor (immer sichtbar, editierbar, Zeilenumbrüche erlaubt)
             OutlinedTextField(
                 value = currentComment,
@@ -221,36 +255,6 @@ fun SongDetailView(
                 Text(songWithLyrics.lyrics, style = MaterialTheme.typography.bodyMedium)
             } else {
                 Text("Kein Songtext verfügbar.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.tertiary)
-            }
-            // Buchseiten
-            if (songPages.isNotEmpty()) {
-                Row(modifier = Modifier.padding(top = 12.dp)) {
-                    songPages.forEachIndexed { idx: Int, page: BookSongPage ->
-                        val colorInfo = getBookColorInfo(page.bookId)
-                        val isNoteBook = page.bookId.contains("_notes")
-                        val pageText = if (page.pageNotes != null) page.pageNotes.toString() else page.page?.toString() ?: ""
-                        Surface(
-                            color = colorInfo.second,
-                            shape = RoundedCornerShape(4.dp),
-                            modifier = Modifier.padding(end = 8.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = pageText,
-                                    color = Color.White,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                                if (isNoteBook) {
-                                    Text(
-                                        text = "🎵",
-                                        fontSize = 18.sp
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
     }
@@ -310,18 +314,17 @@ fun SongItem(
                 modifier = Modifier.padding(end = 0.dp)
             ) {
                 if (pages.isNotEmpty()) {
-                    Column(
-                        horizontalAlignment = Alignment.End,
-                        modifier = Modifier.padding(bottom = 0.dp)
-                    ) {
-                        pages.forEach { page ->
+                    // Group pages: without notes first, then with notes
+                    val pagesWithoutNotes = pages.filter { !it.bookId.contains("_notes") }
+                    val pagesWithNotes = pages.filter { it.bookId.contains("_notes") }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        pagesWithoutNotes.forEach { page ->
                             val colorInfo = getBookColorInfo(page.bookId)
-                            val isNoteBook = page.bookId.contains("_notes")
                             val pageText = if (page.pageNotes != null) page.pageNotes.toString() else page.page?.toString() ?: ""
                             Surface(
                                 color = colorInfo.second,
                                 shape = RoundedCornerShape(4.dp),
-                                modifier = Modifier.padding(bottom = 4.dp)
+                                modifier = Modifier.padding(end = 4.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
@@ -330,16 +333,33 @@ fun SongItem(
                                         style = MaterialTheme.typography.bodyMedium,
                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
                                     )
-                                    if (isNoteBook) {
-                                        Text(
-                                            text = "🎵",
-                                            fontSize = 18.sp
-                                        )
-                                    }
+                                }
+                            }
+                        }
+                        pagesWithNotes.forEach { page ->
+                            val colorInfo = getBookColorInfo(page.bookId)
+                            val pageText = if (page.pageNotes != null) page.pageNotes.toString() else page.page?.toString() ?: ""
+                            Surface(
+                                color = colorInfo.second,
+                                shape = RoundedCornerShape(4.dp),
+                                modifier = Modifier.padding(end = 4.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = pageText,
+                                        color = Color.White,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                    )
+                                    Text(
+                                        text = "🎵",
+                                        fontSize = 18.sp
+                                    )
                                 }
                             }
                         }
                     }
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
                 IconButton(
                     onClick = onFavoriteToggle,
