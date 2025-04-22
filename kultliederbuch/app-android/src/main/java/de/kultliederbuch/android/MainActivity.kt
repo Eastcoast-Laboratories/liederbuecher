@@ -265,6 +265,14 @@ fun SongDetailView(
                 Text("Kein Songtext verfügbar.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.tertiary)
             }
         }
+        // Always visible black line at the bottom as a delimiter
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(Color.Black)
+        )
     }
 }
 
@@ -541,35 +549,41 @@ fun KultliederbuchApp() {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // Song-Liste
-                LazyColumn(
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
                         .padding(horizontal = 8.dp)
                 ) {
-                    itemsIndexed(filteredSongs) { _, song ->
-                        SongItem(
-                            song = song,
-                            pages = songPages.getOrDefault(song.id, emptyList()),
-                            books = bookMap,
-                            onClick = {
-                                selectedSong = song
-                                showSongDetails = true
-                                currentComment = songComments.getOrDefault(song.id, "")
-                                searchFocusRequester.freeFocus()
-                            },
-                            isFavorite = favorites.contains(song.id),
-                            onFavoriteToggle = {
-                                val newFavorites = favorites.toMutableSet()
-                                if (favorites.contains(song.id)) {
-                                    newFavorites.remove(song.id)
-                                } else {
-                                    newFavorites.add(song.id)
-                                }
-                                setFavorites(newFavorites)
-                            },
-                            songComments = songComments
-                        )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomCenter)
+                    ) {
+                        filteredSongs.forEach { song ->
+                            SongItem(
+                                song = song,
+                                pages = songPages.getOrDefault(song.id, emptyList()),
+                                books = bookMap,
+                                onClick = {
+                                    selectedSong = song
+                                    showSongDetails = true
+                                    currentComment = songComments.getOrDefault(song.id, "")
+                                    searchFocusRequester.freeFocus()
+                                },
+                                isFavorite = favorites.contains(song.id),
+                                onFavoriteToggle = {
+                                    val newFavorites = favorites.toMutableSet()
+                                    if (favorites.contains(song.id)) {
+                                        newFavorites.remove(song.id)
+                                    } else {
+                                        newFavorites.add(song.id)
+                                    }
+                                    setFavorites(newFavorites)
+                                },
+                                songComments = songComments
+                            )
+                        }
                     }
                 }
                 // Checkbox section - individual checkboxes
