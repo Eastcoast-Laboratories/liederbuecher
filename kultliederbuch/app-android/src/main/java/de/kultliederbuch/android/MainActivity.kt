@@ -555,12 +555,14 @@ fun KultliederbuchApp() {
                         .weight(1f)
                         .padding(horizontal = 8.dp)
                 ) {
-                    Column(
+                    LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .align(Alignment.BottomCenter)
+                            .align(Alignment.BottomCenter),
+                        reverseLayout = true
                     ) {
-                        filteredSongs.forEach { song ->
+                        items(filteredSongs.size) { index ->
+                            val song = filteredSongs[filteredSongs.size - 1 - index]
                             SongItem(
                                 song = song,
                                 pages = songPages.getOrDefault(song.id, emptyList()),
