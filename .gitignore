@@ -26,3 +26,6 @@ kultliederbuch/.idea/compiler.xml
 kultliederbuch/.idea/kotlinc.xml
 kultliederbuch/.idea/migrations.xml
 kultliederbuch/app-android/build/
+/kultliederbuch/app-android/release/baselineProfiles/0/app-android-release.dm
+/kultliederbuch/app-android/release/baselineProfiles/1/app-android-release.dm
+/kultliederbuch/app-android/release/output-metadata.json
