@@ -9,9 +9,9 @@ from typing import Dict, List, Tuple, Optional
 import logging
 
 # Konfiguration
-EXTRACTED_DIR = "/var/www/kultliederbuch.z11.de/dev/extracted"
-OUTPUT_DIR = "/var/www/kultliederbuch.z11.de/dev/extracted"
-CSV_FILE = "/var/www/kultliederbuch.z11.de/kultliederbuch/app-android/src/main/assets/data.csv"
+EXTRACTED_DIR = "/home/runner/work/liederbuecher/liederbuecher/dev/extracted"
+OUTPUT_DIR = "/home/runner/work/liederbuecher/liederbuecher/dev/extracted"
+CSV_FILE = "/home/runner/work/liederbuecher/liederbuecher/kultliederbuch/app-android/src/main/assets/data.csv"
 
 # Logging einrichten
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -105,15 +105,13 @@ def load_song_page_mapping() -> Dict[str, Dict[int, List[Tuple[str, str]]]]:
                     except ValueError:
                         logger.warning(f"Ungültige Seitenzahl: {cols[idx_seite]} für Song {title}")
                 
-                # Füge Seiten mit Noten hinzu
+                # Speichere Noten-Seitenzahl, aber verwende sie NICHT für Lyrics-Mapping
+                # da der OCR-Text die Liedtexte enthält, nicht die Noten
                 if cols[idx_seite_noten].strip():
                     try:
                         page_notes = int(cols[idx_seite_noten])
-                        # Setze Noten-Seitenzahl im Song-Objekt
+                        # Setze Noten-Seitenzahl im Song-Objekt (nur für Referenz)
                         song_data[song_id]["book_page_notes"] = page_notes
-                        # Wir verwenden die gleiche Mapping für Seiten mit Noten, 
-                        # da der OCR-Text aus dem regulären Buch kommt
-                        songs_by_page[book_id][page_notes].append((song_id, title, artist))
                     except ValueError:
                         logger.warning(f"Ungültige Notenseitenzahl: {cols[idx_seite_noten]} für Song {title}")
     
