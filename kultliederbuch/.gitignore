@@ -2,6 +2,7 @@
 .gradle/
 **/build/
 app-android/release/
+/shared/build/
 
 # Local Gradle configuration
 gradle.properties
