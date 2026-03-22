@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -399,6 +400,7 @@ fun SongItem(
 @Composable
 fun KultliederbuchApp() {
     val context = LocalContext.current
+    val isDarkTheme = isSystemInDarkTheme()
     val (songs, setSongs) = remember { mutableStateOf(emptyList<Song>()) }
     val (search, setSearch) = remember { mutableStateOf("") }
     val (songPages, setSongPages) = remember { mutableStateOf(emptyMap<String, List<BookSongPage>>()) }
@@ -672,38 +674,50 @@ fun KultliederbuchApp() {
                         .padding(0.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val searchTextColor = if (isDarkTheme) Color.White else MaterialTheme.colorScheme.onSurface
+                    val searchPlaceholderColor = if (isDarkTheme) Color.White.copy(alpha = 0.6f) else MaterialTheme.colorScheme.onSurfaceVariant
+                    val searchContainerColor = if (isDarkTheme) Color.Black else MaterialTheme.colorScheme.surface
+                    val searchBorderColor = if (isDarkTheme) Color.White else MaterialTheme.colorScheme.outline
+
                     OutlinedTextField(
                         value = search,
                         onValueChange = { setSearch(it) },
                         modifier = Modifier
                             .weight(1f)
                             .padding(0.dp)
+                            .background(searchContainerColor)
                             .focusRequester(searchFocusRequester)
                             .onFocusChanged { focusState ->
                                 if (focusState.isFocused) {
                                     showSongDetails = false
                                 }
                             },
-                        textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
+                        textStyle = TextStyle(color = searchTextColor),
                         placeholder = {
                             Text(
                                 "Suche nach Titel, Autor oder Text",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = searchPlaceholderColor
                             )
                         },
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                            disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
-                            cursorColor = MaterialTheme.colorScheme.onSurface,
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                            focusedTextColor = searchTextColor,
+                            unfocusedTextColor = searchTextColor,
+                            disabledTextColor = searchTextColor.copy(alpha = 0.38f),
+                            cursorColor = searchTextColor,
+                            focusedBorderColor = searchBorderColor,
+                            unfocusedBorderColor = searchBorderColor,
+                            focusedPlaceholderColor = searchPlaceholderColor,
+                            unfocusedPlaceholderColor = searchPlaceholderColor
                         ),
                         singleLine = true,
                         trailingIcon = {
                             if (search.isNotEmpty()) {
                                 IconButton(onClick = { setSearch("") }) {
-                                    Icon(Icons.Filled.Clear, contentDescription = "Suche löschen")
+                                    Icon(
+                                        Icons.Filled.Clear,
+                                        contentDescription = "Suche löschen",
+                                        tint = searchTextColor
+                                    )
                                 }
                             }
                         }
