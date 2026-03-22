@@ -76,15 +76,65 @@ import androidx.compose.ui.focus.onFocusChanged
 
 // Datenstruktur für die erweiterten Songs mit Texten und Akkorden
 data class SongWithLyrics(
-    val title: String,
-    val artist: String,
-    val lyrics: String,
-    val chords: String,
-    val book_id: String,
-    val book_page: Int?,
-    val book_page_notes: Int?,
-    val id: String
+    val title: String = "",
+    val artist: String = "",
+    val lyrics: String = "",
+    val chords: String = "",
+    val book_id: String = "",
+    val book_page: Int? = null,
+    val book_page_notes: Int? = null,
+    val source_page: Int? = null,
+    val source_book: String? = null
 )
+
+internal fun normalizeLyricsSearchText(value: String): String {
+    return value.lowercase().filter { it.isLetter() }
+}
+
+internal fun findLyricsMatch(
+    song: Song,
+    songsWithLyrics: List<SongWithLyrics>,
+    query: String
+): SongWithLyrics? {
+    val normalizedQuery = normalizeLyricsSearchText(query)
+    if (normalizedQuery.isEmpty()) {
+        return null
+    }
+
+    return songsWithLyrics.firstOrNull { songWithLyrics ->
+        songWithLyrics.title.equals(song.title, ignoreCase = true) &&
+            songWithLyrics.artist.equals(song.author, ignoreCase = true) &&
+            normalizeLyricsSearchText(songWithLyrics.lyrics).contains(normalizedQuery)
+    }
+}
+
+internal fun filterSongsBySearch(
+    songs: List<Song>,
+    songsWithLyrics: List<SongWithLyrics>,
+    search: String,
+    searchInTitle: Boolean,
+    searchInAuthor: Boolean,
+    searchInLyrics: Boolean,
+    showOnlyFavorites: Boolean,
+    favorites: Set<String>
+): List<Song> {
+    if (search.isEmpty()) {
+        return if (showOnlyFavorites) {
+            songs.filter { favorites.contains(it.id) }
+        } else {
+            songs
+        }
+    }
+
+    return songs.filter { song ->
+        val titleMatch = searchInTitle && song.title.contains(search, ignoreCase = true)
+        val authorMatch = searchInAuthor && song.author.contains(search, ignoreCase = true)
+        val lyricsMatch = searchInLyrics && findLyricsMatch(song, songsWithLyrics, search) != null
+        val favoriteMatch = !showOnlyFavorites || favorites.contains(song.id)
+
+        (titleMatch || authorMatch || lyricsMatch) && favoriteMatch
+    }
+}
 
 // Helper functions moved outside of any class or function
 fun getBookColorInfo(buchId: String): Pair<String, Color> {
@@ -507,41 +557,16 @@ fun KultliederbuchApp() {
     
     // Filtere Songs basierend auf Suchbegriff
     val filteredSongs = remember(songs, search, searchInTitle, searchInAuthor, searchInLyrics, songsWithLyrics, showOnlyFavorites, favorites) {
-        if (search.isEmpty()) {
-            if (showOnlyFavorites) {
-                songs.filter { favorites.contains(it.id) }
-            } else {
-                songs
-            }
-        } else {
-            songs.filter { song ->
-                // Suche im Titel
-                val titleMatch = searchInTitle && song.title.contains(search, ignoreCase = true)
-                
-                // Suche im Autor
-                val authorMatch = searchInAuthor && song.author.contains(search, ignoreCase = true)
-                
-                // Textsuche in den aufbereiteten Songtexten - nur wenn notwendig
-                val lyricsMatch = if (searchInLyrics) {
-                    // Suche den aktuellen Song in den JSON-Daten
-                    val matchingSongWithLyrics = songsWithLyrics.find { it.title.equals(song.title, ignoreCase = true) && it.artist.equals(song.author, ignoreCase = true) }
-                    
-                    // Wenn der Song gefunden wurde, prüfe ob der Suchbegriff im Titel ODER im Text enthalten ist
-                    if (matchingSongWithLyrics != null) {
-                        matchingSongWithLyrics.lyrics.contains(search, ignoreCase = true)
-                    } else {
-                        false
-                    }
-                } else {
-                    false
-                }
-                
-                // Favoriten-Filter
-                val favoriteMatch = !showOnlyFavorites || favorites.contains(song.id)
-                
-                titleMatch || authorMatch || lyricsMatch && favoriteMatch
-            }
-        }
+        filterSongsBySearch(
+            songs = songs,
+            songsWithLyrics = songsWithLyrics,
+            search = search,
+            searchInTitle = searchInTitle,
+            searchInAuthor = searchInAuthor,
+            searchInLyrics = searchInLyrics,
+            showOnlyFavorites = showOnlyFavorites,
+            favorites = favorites
+        )
     }
     
     // UI-Aufbau
