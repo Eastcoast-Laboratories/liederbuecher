@@ -1,0 +1,22 @@
+# Gradle
+.gradle/
+**/build/
+app-android/release/
+
+# Local Gradle configuration
+gradle.properties
+
+# Android Studio
+.idea/
+*.iml
+.cxx/
+.externalNativeBuild/
+
+# Unused generated asset
+app-android/src/main/res/drawable/app_background.png
+
+# Local configuration
+local.properties
+
+# OS files
+.DS_Store
