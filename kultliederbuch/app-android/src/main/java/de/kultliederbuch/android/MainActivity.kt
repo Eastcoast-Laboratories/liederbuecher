@@ -684,7 +684,21 @@ fun KultliederbuchApp() {
                                     showSongDetails = false
                                 }
                             },
-                        placeholder = { Text("Suche nach Titel, Autor oder Text") },
+                        textStyle = TextStyle(color = MaterialTheme.colorScheme.onSurface),
+                        placeholder = {
+                            Text(
+                                "Suche nach Titel, Autor oder Text",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                            cursorColor = MaterialTheme.colorScheme.onSurface,
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                        ),
                         singleLine = true,
                         trailingIcon = {
                             if (search.isNotEmpty()) {
