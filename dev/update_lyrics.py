@@ -17,11 +17,11 @@ CSV_FILE = "/var/www/kultliederbuch.z11.de/kultliederbuch/app-android/src/main/a
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Mapping von Buchnamen zu Buchnummern
+# Mapping von Buchnamen zu Buchnummern (CSV book_id)
 BOOK_MAPPING = {
     "Das Ding 1 (grün)": "1",
-    "Das Ding 2 (rot)": "3",
-    "Das Ding 3 (gelb)": "2",
+    "Das Ding 2 (rot)": "2",
+    "Das Ding 3 (gelb)": "3",
     "Das Ding 4 (blau)": "4",
     "Das Ding 5 (grau)": "5",
     "Weihnachtslieder": "W"
@@ -52,11 +52,10 @@ def parse_csv_line(line: str) -> List[str]:
     result.append(current_field.strip())
     return result
 
-# Lade die CSV-Daten und erstelle eine Mapping von Seitenzahlen zu Songs
-def load_song_page_mapping() -> Dict[str, Dict[int, List[Tuple[str, str]]]]:
-    # Ergebnis-Format: {buchnummer: {seitenzahl: [(song_id, title, artist),...]}}
-    songs_by_page = defaultdict(lambda: defaultdict(list))
-    song_data = {}  # Format: {song_id: {"title": str, "artist": str, "lyrics": str}}
+# Lade die CSV-Daten und erstelle Song-Daten gruppiert nach Buch
+def load_song_data() -> Dict[str, dict]:
+    # Ergebnis-Format: {song_id: {"title": str, "artist": str, ...}}
+    song_data = {}
     
     logger.info(f"Lade Song-Daten aus {CSV_FILE}")
     try:
@@ -84,6 +83,20 @@ def load_song_page_mapping() -> Dict[str, Dict[int, List[Tuple[str, str]]]]:
                 # Song-ID erstellen
                 song_id = f"{title.replace(' ', '_').lower()}_{book_id}"
                 
+                # Seitenzahlen parsen
+                book_page = None
+                book_page_notes = None
+                if cols[idx_seite].strip():
+                    try:
+                        book_page = int(cols[idx_seite])
+                    except ValueError:
+                        pass
+                if cols[idx_seite_noten].strip():
+                    try:
+                        book_page_notes = int(cols[idx_seite_noten])
+                    except ValueError:
+                        pass
+                
                 # Speichere Song-Daten
                 song_data[song_id] = {
                     "title": title,
@@ -91,37 +104,40 @@ def load_song_page_mapping() -> Dict[str, Dict[int, List[Tuple[str, str]]]]:
                     "lyrics": "",
                     "chords": "",
                     "book_id": book_id,
-                    "book_page": None,  # Wird später gesetzt
-                    "book_page_notes": None  # Wird später gesetzt
+                    "book_page": book_page,
+                    "book_page_notes": book_page_notes
                 }
-                
-                # Füge Seiten hinzu (reguläre Seiten)
-                if cols[idx_seite].strip():
-                    try:
-                        page = int(cols[idx_seite])
-                        # Setze Seitenzahl im Song-Objekt
-                        song_data[song_id]["book_page"] = page
-                        songs_by_page[book_id][page].append((song_id, title, artist))
-                    except ValueError:
-                        logger.warning(f"Ungültige Seitenzahl: {cols[idx_seite]} für Song {title}")
-                
-                # Füge Seiten mit Noten hinzu
-                if cols[idx_seite_noten].strip():
-                    try:
-                        page_notes = int(cols[idx_seite_noten])
-                        # Setze Noten-Seitenzahl im Song-Objekt
-                        song_data[song_id]["book_page_notes"] = page_notes
-                        # Wir verwenden die gleiche Mapping für Seiten mit Noten, 
-                        # da der OCR-Text aus dem regulären Buch kommt
-                        songs_by_page[book_id][page_notes].append((song_id, title, artist))
-                    except ValueError:
-                        logger.warning(f"Ungültige Notenseitenzahl: {cols[idx_seite_noten]} für Song {title}")
     
     except Exception as e:
         logger.error(f"Fehler beim Laden der CSV-Datei: {e}")
     
-    logger.info(f"Geladen: {sum(len(pages) for pages in songs_by_page.values())} Seitenzuordnungen für {len(song_data)} Songs")
-    return songs_by_page, song_data
+    logger.info(f"Geladen: {len(song_data)} Songs aus CSV")
+    return song_data
+
+
+def normalize_title(title: str) -> str:
+    """Normalize a title for fuzzy matching"""
+    t = title.upper().strip()
+    # Remove common OCR artifacts and punctuation
+    t = re.sub(r'[^A-Z0-9ÄÖÜÀÁÂÃÈÉÊÌÍÎÒÓÔÙÚÛÑ\s]', '', t)
+    t = re.sub(r'\s+', ' ', t)
+    return t.strip()
+
+
+def find_song_page_by_title(title: str, pages: Dict[int, str], min_page: int = 10) -> Optional[int]:
+    """Find the PDF page number where a song title appears in the first few lines.
+    Skip intro/TOC pages (< min_page)."""
+    norm_title = normalize_title(title)
+    
+    for page_num in sorted(pages.keys()):
+        if page_num < min_page:
+            continue
+        # Check first 3 lines of the page for the title
+        first_lines = ' '.join(pages[page_num].split('\n')[:3])
+        norm_page = normalize_title(first_lines)
+        if norm_title in norm_page:
+            return page_num
+    return None
 
 # Extrahiere Seiteninhalte aus einer OCR-Textdatei
 def extract_pages_from_ocr(ocr_file: str) -> Dict[int, str]:
@@ -188,9 +204,15 @@ def clean_lyrics(text: str) -> Tuple[str, str]:
 
 # Hauptfunktion zum Extrahieren und Zuordnen der Songtexte
 def update_song_lyrics():
-    # Lade Song-Seiten-Mapping und Song-Daten
-    songs_by_page, song_data = load_song_page_mapping()
+    # Lade Song-Daten aus CSV
+    song_data = load_song_data()
     updated_songs = 0
+    not_found_songs = []
+    
+    # Gruppiere Songs nach Buch-ID
+    songs_by_book = defaultdict(list)
+    for song_id, data in song_data.items():
+        songs_by_book[data["book_id"]].append((song_id, data))
     
     # Verarbeite jede OCR-Textdatei
     for book_name, book_id in BOOK_MAPPING.items():
@@ -203,28 +225,36 @@ def update_song_lyrics():
         # Extrahiere Seiteninhalte
         pages = extract_pages_from_ocr(ocr_file)
         
-        # Ordne Songtexte zu
-        for page_num, page_content in pages.items():
-            songs_on_page = songs_by_page.get(book_id, {}).get(page_num, [])
+        # Songs dieses Buches per Titel in den OCR-Seiten suchen
+        book_songs = songs_by_book.get(book_id, [])
+        logger.info(f"Buch '{book_name}' (ID={book_id}): {len(book_songs)} Songs zu verarbeiten, {len(pages)} OCR-Seiten")
+        
+        for song_id, data in book_songs:
+            title = data["title"]
             
-            if not songs_on_page:
-                # Keine Songs auf dieser Seite gefunden
-                continue
+            # Finde die PDF-Seite anhand des Titels
+            pdf_page = find_song_page_by_title(title, pages)
             
-            logger.info(f"Gefunden: {len(songs_on_page)} Songs auf Seite {page_num} in Buch {book_id}")
-            
-            # Wenn mehrere Songs auf einer Seite sind, wird der Text allen zugeordnet
-            # In einer realen Anwendung würde man hier eine komplexere Logik implementieren
-            for song_id, title, artist in songs_on_page:
-                if song_id in song_data:
-                    cleaned_lyrics, chords = clean_lyrics(page_content)
-                    song_data[song_id]["lyrics"] = cleaned_lyrics
-                    song_data[song_id]["chords"] = chords
-                    # Seitenzahl und Buch nochmal explizit setzen (zur Sicherheit)
-                    song_data[song_id]["source_page"] = page_num
-                    song_data[song_id]["source_book"] = book_id
-                    updated_songs += 1
-                    logger.info(f"Songtext zugeordnet: '{title}' von '{artist}' (ID: {song_id})")
+            if pdf_page is not None:
+                page_content = pages[pdf_page]
+                cleaned_lyrics, chords = clean_lyrics(page_content)
+                song_data[song_id]["lyrics"] = cleaned_lyrics
+                song_data[song_id]["chords"] = chords
+                song_data[song_id]["source_page"] = pdf_page
+                song_data[song_id]["source_book"] = book_id
+                updated_songs += 1
+                logger.info(f"MATCH: '{title}' von '{data['artist']}' -> PDF-Seite {pdf_page} (Buch {book_id})")
+            else:
+                not_found_songs.append((book_id, title, data["artist"]))
+                logger.warning(f"NICHT GEFUNDEN: '{title}' von '{data['artist']}' in Buch {book_id}")
+    
+    logger.info(f"Ergebnis: {updated_songs} zugeordnet, {len(not_found_songs)} nicht gefunden")
+    if not_found_songs:
+        logger.info(f"Nicht gefundene Songs:")
+        for book_id, title, artist in not_found_songs[:20]:
+            logger.info(f"  Buch {book_id}: '{title}' von '{artist}'")
+        if len(not_found_songs) > 20:
+            logger.info(f"  ... und {len(not_found_songs) - 20} weitere")
     
     # Speichere aktualisierte Songs in JSON
     output_file = os.path.join(OUTPUT_DIR, "songs_with_lyrics.json")
