@@ -124,18 +124,22 @@ def normalize_title(title: str) -> str:
     return t.strip()
 
 
-def find_song_page_by_title(title: str, pages: Dict[int, str], min_page: int = 10) -> Optional[int]:
-    """Find the PDF page number where a song title appears in the first few lines.
-    Skip intro/TOC pages (< min_page)."""
+def get_non_empty_lines(text: str) -> List[str]:
+    return [line.strip() for line in text.splitlines() if line.strip()]
+
+
+def find_song_page_by_title(title: str, artist: str, pages: Dict[int, str], min_page: int = 10) -> Optional[int]:
+    """Find the PDF page number where a song title appears at the top of the page.
+    Skip intro/TOC pages (<= min_page)."""
     norm_title = normalize_title(title)
     
     for page_num in sorted(pages.keys()):
-        if page_num < min_page:
+        if page_num <= min_page:
             continue
-        # Check first 3 lines of the page for the title
-        first_lines = ' '.join(pages[page_num].split('\n')[:3])
-        norm_page = normalize_title(first_lines)
-        if norm_title in norm_page:
+        first_lines = ' '.join(get_non_empty_lines(pages[page_num])[:3])
+        if not first_lines:
+            continue
+        if norm_title in normalize_title(first_lines):
             return page_num
     return None
 
@@ -233,7 +237,7 @@ def update_song_lyrics():
             title = data["title"]
             
             # Finde die PDF-Seite anhand des Titels
-            pdf_page = find_song_page_by_title(title, pages)
+            pdf_page = find_song_page_by_title(title, data["artist"], pages)
             
             if pdf_page is not None:
                 page_content = pages[pdf_page]
