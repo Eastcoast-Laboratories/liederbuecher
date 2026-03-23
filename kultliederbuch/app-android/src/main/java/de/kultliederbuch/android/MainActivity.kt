@@ -459,7 +459,7 @@ fun KultliederbuchApp() {
     val (songsWithLyrics, setSongsWithLyrics) = remember { mutableStateOf(emptyList<SongWithLyrics>()) }
     val (searchInTitle, setSearchInTitle) = remember { mutableStateOf(true) }
     val (searchInAuthor, setSearchInAuthor) = remember { mutableStateOf(true) }
-    val (searchInLyrics, setSearchInLyrics) = remember { mutableStateOf(false) }
+    val (searchInLyrics, setSearchInLyrics) = remember { mutableStateOf(true) }
     val (showOnlyFavorites, setShowOnlyFavorites) = remember { mutableStateOf(false) }
     val (favorites, setFavorites) = remember { mutableStateOf(setOf<String>()) } // Set von Song-IDs
     
